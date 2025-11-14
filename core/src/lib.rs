@@ -6,17 +6,29 @@ use std::sync::Arc;
 pub mod config;
 mod database;
 mod error;
+mod services;
+mod stores;
+mod types;
 
 #[derive(Clone)]
 pub struct NeobabuCore {
     config: Arc<Config>,
     db: Arc<Database>,
+    pub services: Arc<services::Services>,
+    pub stores: Arc<stores::Stores>,
 }
 
 impl NeobabuCore {
     pub async fn initialize(config: Config) -> CoreResult<Self> {
         let config = Arc::new(config);
         let db = Database::initialize(&config).await?;
-        Ok(Self { config, db })
+        let stores = stores::Stores::initialize(&db);
+        let services = services::Services::initialize(&stores);
+        Ok(Self {
+            config,
+            db,
+            services,
+            stores,
+        })
     }
 }

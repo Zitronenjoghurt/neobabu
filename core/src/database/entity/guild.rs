@@ -3,7 +3,7 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "user")]
+#[sea_orm(table_name = "guild")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
@@ -13,13 +13,13 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_one = "super::user_birthday::Entity")]
-    UserBirthday,
+    #[sea_orm(has_one = "super::guild_birthday::Entity")]
+    GuildBirthday,
 }
 
-impl Related<super::user_birthday::Entity> for Entity {
+impl Related<super::guild_birthday::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::UserBirthday.def()
+        Relation::GuildBirthday.def()
     }
 }
 

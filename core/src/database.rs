@@ -5,7 +5,7 @@ use sea_orm::*;
 use std::sync::Arc;
 use tracing::info;
 
-mod entity;
+pub mod entity;
 
 pub struct Database {
     connection: DatabaseConnection,

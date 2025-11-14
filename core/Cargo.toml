@@ -7,6 +7,7 @@ description = "The core library containing all of neobabu's main logic."
 [dependencies]
 migration = { path = "migration" }
 sea-orm = { version = "2.0.0-rc.16", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+chrono = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

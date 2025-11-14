@@ -11,9 +11,21 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(User::Table)
                     .if_not_exists()
-                    .col(string(User::DiscordId).primary_key())
+                    .col(string(User::Id).primary_key())
                     .col(timestamp(User::CreatedAt).default(Expr::current_timestamp()))
                     .col(timestamp(User::UpdatedAt).default(Expr::current_timestamp()))
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .create_table(
+                Table::create()
+                    .table(Guild::Table)
+                    .if_not_exists()
+                    .col(string(Guild::Id).primary_key())
+                    .col(timestamp(Guild::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp(Guild::UpdatedAt).default(Expr::current_timestamp()))
                     .to_owned(),
             )
             .await?;
@@ -26,6 +38,10 @@ impl MigrationTrait for Migration {
             .drop_table(Table::drop().table(User::Table).to_owned())
             .await?;
 
+        manager
+            .drop_table(Table::drop().table(Guild::Table).to_owned())
+            .await?;
+
         Ok(())
     }
 }
@@ -33,7 +49,15 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 enum User {
     Table,
-    DiscordId,
+    Id,
+    CreatedAt,
+    UpdatedAt,
+}
+
+#[derive(DeriveIden)]
+enum Guild {
+    Table,
+    Id,
     CreatedAt,
     UpdatedAt,
 }

@@ -1,4 +1,4 @@
-.PHONY: up down build logs migration entity
+.PHONY: up down build logs db-up db-down migration entity
 
 up:
 	docker compose -f docker/docker-compose.yml up -d
@@ -11,6 +11,12 @@ build:
 
 logs:
 	docker compose -f docker/docker-compose.yml logs -f
+
+db-up:
+	docker compose -f docker/docker-compose.db.yml up -d
+
+db-down:
+	docker compose -f docker/docker-compose.db.yml down
 
 migration:
 	cd ./core && sea-orm-cli migrate generate $(NAME)

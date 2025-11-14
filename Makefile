@@ -16,4 +16,4 @@ migration:
 	cd ./core && sea-orm-cli migrate generate $(NAME)
 
 entity:
-	sea-orm-cli generate entity -o ./server/src/database/entity --database-url postgresql://admin:root@localhost:5432/neobabu
+	sea-orm-cli generate entity -o ./core/src/database/entity --database-url postgresql://admin:root@localhost:54323/neobabu

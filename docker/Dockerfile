@@ -14,4 +14,5 @@ RUN cargo build --release --bin neobabu-bot
 FROM debian:bookworm-slim AS runtime
 WORKDIR /neobabu
 COPY --from=builder /neobabu/target/release/neobabu-bot /usr/local/bin/bot
+COPY --from=builder /neobabu/docker/bot-config.toml /neobabu/bot-config.toml
 CMD ["/usr/local/bin/bot"]

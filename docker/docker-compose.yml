@@ -16,6 +16,7 @@ services:
 
   neobabu:
     image: neobabu-bot:latest
+    pull_policy: never
     build:
       context: ..
       dockerfile: docker/Dockerfile

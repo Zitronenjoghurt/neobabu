@@ -5,8 +5,10 @@ pub enum UiColor {
     LightGray,
     Gray,
     DarkGray,
+    LightRed,
     Config,
     Success,
+    Error,
 }
 
 impl UiColor {
@@ -16,8 +18,10 @@ impl UiColor {
             Self::LightGray => poise::serenity_prelude::Color::from_rgb(217, 211, 217),
             Self::Gray => poise::serenity_prelude::Color::from_rgb(160, 151, 161),
             Self::DarkGray => poise::serenity_prelude::Color::from_rgb(107, 94, 107),
+            Self::LightRed => poise::serenity_prelude::Color::from_rgb(184, 92, 84),
             Self::Config => Self::Gray.as_serenity(),
             Self::Success => Self::Lime.as_serenity(),
+            Self::Error => Self::LightRed.as_serenity(),
         }
     }
 }

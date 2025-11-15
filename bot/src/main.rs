@@ -6,6 +6,7 @@ use tracing_subscriber::EnvFilter;
 
 mod commands;
 mod config;
+mod context;
 mod error;
 mod events;
 mod state;
@@ -24,6 +25,7 @@ async fn main() {
     let commands = commands::get_commands();
     let options = poise::FrameworkOptions {
         commands,
+        on_error: |error| Box::pin(error::handler(error)),
         event_handler: |ctx, event, framework, state| {
             Box::pin(event_handler(ctx, event, framework, state))
         },

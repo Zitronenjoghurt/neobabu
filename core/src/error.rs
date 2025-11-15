@@ -13,6 +13,13 @@ pub enum CoreError {
 }
 
 impl CoreError {
+    pub fn is_user_error(&self) -> bool {
+        match self {
+            Self::FeatureNotEnabled(_) | Self::InvalidBirthday(_) => true,
+            Self::Database(_) => false,
+        }
+    }
+
     pub fn invalid_birthday(reason: impl Into<String>) -> Self {
         Self::InvalidBirthday(reason.into())
     }

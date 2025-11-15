@@ -17,8 +17,5 @@ pub async fn ping(ctx: Context<'_>) -> BotResult<()> {
         )
         .footer_text("If the shard just started, heartbeat latency will be 0ms.");
 
-    let reply = embed.create_reply();
-    ctx.send(reply).await?;
-
     Ok(())
 }

@@ -4,10 +4,10 @@ use crate::error::CoreResult;
 use std::sync::Arc;
 
 pub mod config;
-mod database;
-mod error;
-mod services;
-mod stores;
+pub mod database;
+pub mod error;
+pub mod services;
+pub mod stores;
 mod types;
 
 #[derive(Clone)]

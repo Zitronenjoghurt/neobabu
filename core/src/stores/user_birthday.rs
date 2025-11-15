@@ -40,20 +40,4 @@ impl UserBirthdayStore {
     ) -> CoreResult<user_birthday::Model> {
         Ok(model.insert(self.db.conn()).await?)
     }
-
-    pub async fn upsert(
-        &self,
-        model: user_birthday::ActiveModel,
-    ) -> CoreResult<user_birthday::Model> {
-        let exists = self
-            .find_by_user_id(model.user_id.as_ref())
-            .await?
-            .is_some();
-
-        if exists {
-            self.update(model).await
-        } else {
-            self.insert(model).await
-        }
-    }
 }

@@ -3,6 +3,8 @@ use crate::Context;
 use poise::serenity_prelude::{Colour, CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, User};
 use poise::{async_trait, CreateReply};
 
+pub mod interactive;
+
 #[async_trait]
 pub trait CreateEmbedExt: Sized {
     fn create_reply(self) -> CreateReply;
@@ -17,6 +19,10 @@ pub trait CreateEmbedExt: Sized {
 
     fn success_user(self, user: &User) -> Self {
         self.success().user(user)
+    }
+
+    fn error(self) -> Self {
+        self.ui_color(UiColor::Error)
     }
 }
 
@@ -49,7 +55,6 @@ impl CreateEmbedExt for CreateEmbed {
     }
 
     fn footer_text(self, text: impl Into<String>) -> Self {
-        let footer = CreateEmbedFooter::new(text);
-        self.footer(footer)
+        self.footer(CreateEmbedFooter::new(text))
     }
 }

@@ -11,7 +11,7 @@ pub trait ContextExt {
     fn author_id_string(&self) -> String;
     fn guild_id_string(&self) -> Option<String>;
 
-    async fn fetch_author(&self) -> BotResult<user::Model> {
+    async fn fetch_author_model(&self) -> BotResult<user::Model> {
         Ok(self
             .stores()
             .user
@@ -19,7 +19,7 @@ pub trait ContextExt {
             .await?)
     }
 
-    async fn fetch_guild(&self) -> BotResult<guild::Model> {
+    async fn fetch_guild_model(&self) -> BotResult<guild::Model> {
         let Some(guild_id) = self.guild_id_string() else {
             return Err(BotError::GuildCommandOnly);
         };

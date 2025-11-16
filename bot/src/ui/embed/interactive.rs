@@ -10,6 +10,8 @@ use poise::serenity_prelude::{
 use poise::CreateReply;
 use std::time::Duration;
 
+pub mod rows;
+
 pub enum InteractionResult {
     Continue(CreateEmbed),
     Stop(CreateEmbed),

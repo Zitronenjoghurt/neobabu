@@ -6,6 +6,8 @@ pub type CoreResult<T> = Result<T, CoreError>;
 pub enum CoreError {
     #[error("Database error: {0}")]
     Database(#[from] sea_orm::DbErr),
+    #[error("Birthday updated too recently")]
+    BirthdayTimeout,
     #[error("Feature not enabled on server: {0:?}")]
     FeatureNotEnabled(Feature),
     #[error("Invalid birthday: {0}")]
@@ -15,7 +17,7 @@ pub enum CoreError {
 impl CoreError {
     pub fn is_user_error(&self) -> bool {
         match self {
-            Self::FeatureNotEnabled(_) | Self::InvalidBirthday(_) => true,
+            Self::BirthdayTimeout | Self::FeatureNotEnabled(_) | Self::InvalidBirthday(_) => true,
             Self::Database(_) => false,
         }
     }

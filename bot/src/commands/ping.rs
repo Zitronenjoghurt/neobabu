@@ -3,6 +3,7 @@ use crate::ui::embed::CreateEmbedExt;
 use crate::Context;
 use poise::serenity_prelude::CreateEmbed;
 
+/// Ping the bot to profile its heartbeat latency
 #[poise::command(slash_command)]
 pub async fn ping(ctx: Context<'_>) -> BotResult<()> {
     let latency = ctx.ping().await;
@@ -16,6 +17,8 @@ pub async fn ping(ctx: Context<'_>) -> BotResult<()> {
             false,
         )
         .footer_text("If the shard just started, heartbeat latency will be 0ms.");
+
+    ctx.send(embed.create_reply()).await?;
 
     Ok(())
 }

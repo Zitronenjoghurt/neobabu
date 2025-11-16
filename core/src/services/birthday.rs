@@ -1,9 +1,12 @@
-use crate::database::entity::{guild, user, user_birthday};
+use crate::database::entity::{user, user_birthday};
 use crate::error::{CoreError, CoreResult};
 use crate::stores::Stores;
-use crate::types::feature::Feature;
+use chrono::Duration;
 use sea_orm::{IntoActiveModel, Set};
+use std::ops::Add;
 use std::sync::Arc;
+
+const BIRTHDAY_UPDATE_TIMEOUT_HOURS: i64 = 24 * 150;
 
 pub struct BirthdayService {
     stores: Arc<Stores>,
@@ -37,23 +40,23 @@ impl BirthdayService {
     pub async fn set_birthday(
         &self,
         user: &user::Model,
-        guild: &guild::Model,
         day: i16,
         month: i16,
         year: Option<i16>,
     ) -> CoreResult<()> {
-        let guild_birthday = self
-            .stores
-            .guild_birthday
-            .fetch_or_create(&guild.id)
-            .await?;
-        if !guild_birthday.enabled {
-            return Err(CoreError::FeatureNotEnabled(Feature::Birthday));
-        };
-
         self.validate_birthday(day, month, year)?;
 
         if let Some(user_birthday) = self.stores.user_birthday.find_by_user_id(&user.id).await? {
+            let now = chrono::Utc::now();
+            if user_birthday
+                .updated_at
+                .and_utc()
+                .add(Duration::hours(BIRTHDAY_UPDATE_TIMEOUT_HOURS))
+                > now
+            {
+                return Err(CoreError::BirthdayTimeout);
+            }
+
             let mut active = user_birthday.into_active_model();
             active.day = Set(day);
             active.month = Set(month);

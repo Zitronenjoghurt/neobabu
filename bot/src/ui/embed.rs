@@ -21,6 +21,14 @@ pub trait CreateEmbedExt: Sized {
         self.success().user(user)
     }
 
+    fn warning(self) -> Self {
+        self.ui_color(UiColor::Warning)
+    }
+
+    fn warning_user(self, user: &User) -> Self {
+        self.warning().user(user)
+    }
+
     fn error(self) -> Self {
         self.ui_color(UiColor::Error)
     }

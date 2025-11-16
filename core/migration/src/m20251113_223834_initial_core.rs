@@ -30,6 +30,36 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
+        manager
+            .create_table(
+                Table::create()
+                    .table(UserGuild::Table)
+                    .if_not_exists()
+                    .col(string(UserGuild::UserId))
+                    .col(string(UserGuild::GuildId))
+                    .col(timestamp(UserGuild::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp(UserGuild::UpdatedAt).default(Expr::current_timestamp()))
+                    .primary_key(
+                        Index::create()
+                            .col(UserGuild::UserId)
+                            .col(UserGuild::GuildId),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(UserGuild::Table, UserGuild::UserId)
+                            .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(UserGuild::Table, UserGuild::GuildId)
+                            .to(Guild::Table, Guild::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
+                    .to_owned(),
+            )
+            .await?;
+
         Ok(())
     }
 
@@ -40,6 +70,10 @@ impl MigrationTrait for Migration {
 
         manager
             .drop_table(Table::drop().table(Guild::Table).to_owned())
+            .await?;
+
+        manager
+            .drop_table(Table::drop().table(UserGuild::Table).to_owned())
             .await?;
 
         Ok(())
@@ -58,6 +92,15 @@ enum User {
 enum Guild {
     Table,
     Id,
+    CreatedAt,
+    UpdatedAt,
+}
+
+#[derive(DeriveIden)]
+enum UserGuild {
+    Table,
+    UserId,
+    GuildId,
     CreatedAt,
     UpdatedAt,
 }

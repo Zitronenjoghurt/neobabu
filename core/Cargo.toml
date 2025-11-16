@@ -10,4 +10,6 @@ sea-orm = { version = "2.0.0-rc.16", features = ["sqlx-postgres", "runtime-tokio
 chrono = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+tokio-cron-scheduler = "0.15.1"
 tracing = { workspace = true }
+futures = "0.3.31"

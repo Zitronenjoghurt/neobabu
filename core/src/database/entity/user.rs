@@ -15,11 +15,28 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_one = "super::user_birthday::Entity")]
     UserBirthday,
+    #[sea_orm(has_many = "super::user_guild::Entity")]
+    UserGuild,
 }
 
 impl Related<super::user_birthday::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::UserBirthday.def()
+    }
+}
+
+impl Related<super::user_guild::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::UserGuild.def()
+    }
+}
+
+impl Related<super::guild::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::user_guild::Relation::Guild.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::user_guild::Relation::User.def().rev())
     }
 }
 

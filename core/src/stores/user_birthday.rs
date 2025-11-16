@@ -40,4 +40,10 @@ impl UserBirthdayStore {
     ) -> CoreResult<user_birthday::Model> {
         Ok(model.insert(self.db.conn()).await?)
     }
+
+    pub async fn stream_all(
+        &self,
+    ) -> CoreResult<impl futures::Stream<Item = Result<user_birthday::Model, sea_orm::DbErr>>> {
+        Ok(user_birthday::Entity::find().stream(self.db.conn()).await?)
+    }
 }

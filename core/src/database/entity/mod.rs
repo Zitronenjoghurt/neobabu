@@ -6,3 +6,4 @@ pub mod guild;
 pub mod guild_birthday;
 pub mod user;
 pub mod user_birthday;
+pub mod user_guild;

@@ -7,12 +7,14 @@ mod guild;
 mod guild_birthday;
 mod user;
 mod user_birthday;
+mod user_guild;
 
 pub struct Stores {
     pub guild: Arc<guild::GuildStore>,
     pub guild_birthday: Arc<guild_birthday::GuildBirthdayStore>,
     pub user: Arc<user::UserStore>,
     pub user_birthday: Arc<user_birthday::UserBirthdayStore>,
+    pub user_guild: Arc<user_guild::UserGuildStore>,
 }
 
 impl Stores {
@@ -22,6 +24,7 @@ impl Stores {
             guild_birthday: guild_birthday::GuildBirthdayStore::initialize(db),
             user: user::UserStore::initialize(db),
             user_birthday: user_birthday::UserBirthdayStore::initialize(db),
+            user_guild: user_guild::UserGuildStore::initialize(db),
         })
     }
 }

@@ -1,12 +1,14 @@
 use crate::error::BotError;
 use crate::events::event_handler;
 use crate::state::BotState;
+use poise::serenity_prelude::{ClientBuilder, GatewayIntents};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 mod commands;
 mod config;
 mod context;
+mod core_events;
 mod error;
 mod events;
 mod state;
@@ -36,6 +38,10 @@ async fn main() {
     let framework = poise::Framework::<BotState, BotError>::builder()
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
+                state.core.start_jobs().await?;
+                let event_rx = state.core.event_bus.subscribe();
+                core_events::listen(ctx.clone(), event_rx).await;
+
                 //info!("Registering commands...");
                 //let guild_id = poise::serenity_prelude::GuildId::new();
                 //poise::builtins::register_in_guild(ctx, &framework.options().commands, guild_id).await?;
@@ -47,8 +53,10 @@ async fn main() {
         .options(options)
         .build();
 
-    let intents = poise::serenity_prelude::GatewayIntents::privileged();
-    let client = poise::serenity_prelude::ClientBuilder::new(&config.credentials.token, intents)
+    let intents = GatewayIntents::privileged()
+        | GatewayIntents::GUILD_MESSAGES
+        | GatewayIntents::DIRECT_MESSAGES;
+    let client = ClientBuilder::new(&config.credentials.token, intents)
         .framework(framework)
         .await;
 

@@ -15,6 +15,8 @@ pub enum BotError {
     Core(#[from] neobabu_core::error::CoreError),
     #[error("This command can only be used in a guild.")]
     GuildCommandOnly,
+    #[error("Parse int error: {0}")]
+    ParseInt(#[from] std::num::ParseIntError),
     #[error("Serenity error: {0}")]
     Serenity(#[from] poise::serenity_prelude::Error),
 }
@@ -24,7 +26,7 @@ impl BotError {
         match self {
             Self::Core(error) => error.is_user_error(),
             Self::GuildCommandOnly => true,
-            Self::Serenity(_) => false,
+            Self::ParseInt(_) | Self::Serenity(_) => false,
         }
     }
 }

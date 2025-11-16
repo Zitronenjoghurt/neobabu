@@ -1,0 +1,30 @@
+use crate::error::BotResult;
+use neobabu_core::events::birthday_notification::BirthdayNotification;
+use poise::serenity_prelude::{ChannelId, Context, CreateMessage, GuildId, UserId};
+
+pub async fn handle(ctx: &Context, event: BirthdayNotification) -> BotResult<()> {
+    let guild_id = GuildId::new(event.guild_id.parse()?);
+    let user_id = UserId::new(event.user_id.parse()?);
+    let channel_id = ChannelId::new(event.channel_id.parse()?);
+
+    let Ok(_member) = guild_id.member(ctx, user_id).await else {
+        return Ok(());
+    };
+
+    let belated_text = if event.is_belated { " belated" } else { "" };
+    let age_text = match event.age {
+        Some(age) => format!(" turned `{age}`"),
+        None => "".to_string(),
+    };
+
+    let server_message = format!("🎂 <@{user_id}>{age_text}, **Happy{belated_text} birthday!** 🎉");
+    let _ = channel_id
+        .send_message(ctx, CreateMessage::new().content(server_message))
+        .await;
+    let _ = user_id.dm(
+        ctx,
+        CreateMessage::new().content("🎂 **HAPPY BIRTHDAY!** 🎉"),
+    );
+
+    Ok(())
+}

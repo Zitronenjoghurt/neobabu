@@ -1,4 +1,4 @@
-use crate::database::entity::guild_birthday;
+use crate::database::entity::{guild, guild_birthday};
 use crate::database::Database;
 use crate::error::CoreResult;
 use sea_orm::{ActiveModelTrait, ColumnTrait, Set};
@@ -24,17 +24,13 @@ impl GuildBirthdayStore {
             .await?)
     }
 
-    pub async fn fetch_or_create(
-        &self,
-        guild_id: impl AsRef<str>,
-    ) -> CoreResult<guild_birthday::Model> {
-        let guild_id = guild_id.as_ref().to_string();
-        if let Some(existing_guild_birthday) = self.find_by_guild_id(&guild_id).await? {
+    pub async fn fetch_or_create(&self, guild: &guild::Model) -> CoreResult<guild_birthday::Model> {
+        if let Some(existing_guild_birthday) = self.find_by_guild_id(&guild.id).await? {
             return Ok(existing_guild_birthday);
         };
 
         let new_guild_birthday = guild_birthday::ActiveModel {
-            guild_id: Set(guild_id.into()),
+            guild_id: Set(guild.id.to_string()),
             enabled: Set(false),
             notification_channel_id: Set(None),
             ..Default::default()

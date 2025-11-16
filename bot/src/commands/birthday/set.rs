@@ -32,7 +32,7 @@ pub async fn set(
     let mut embed = CreateEmbed::default()
         .warning_user(&ctx.author())
         .title("Do you want to set your birthday?")
-        .description("Your birthday will be set and may be **announced** on servers you have interacted with where this bot is on.\n\nYou will **not** be able to change it again for a while. If you did not specify your birth year the bot will not announce your age.\n\n**Are you sure you want to proceed?**")
+        .description("Your birthday will be set globally and may be **announced** on servers you have interacted with (where this bot is on).\n\nYou will **not** be able to change it again for a while. If you did not specify your birth year the bot will not announce your age.\n\n**Are you sure you want to proceed?**")
         .field("Day", day.to_string(), true)
         .field("Month", month.to_string(), true);
 

@@ -11,6 +11,7 @@ mod error;
 mod events;
 mod state;
 mod ui;
+mod utils;
 
 pub type Context<'a> = poise::Context<'a, BotState, BotError>;
 

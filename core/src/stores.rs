@@ -1,6 +1,8 @@
 use crate::database::Database;
 use std::sync::Arc;
 
+pub use sea_orm::{IntoActiveModel, Set};
+
 mod guild;
 mod guild_birthday;
 mod user;

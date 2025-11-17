@@ -40,7 +40,7 @@ async fn main() {
             Box::pin(async move {
                 state.core.start_jobs().await?;
                 let event_rx = state.core.event_bus.subscribe();
-                core_events::listen(ctx.clone(), event_rx).await;
+                core_events::listen(ctx.clone(), state.clone(), event_rx).await;
 
                 //info!("Registering commands...");
                 //let guild_id = poise::serenity_prelude::GuildId::new();

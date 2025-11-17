@@ -1,12 +1,16 @@
 use crate::error::BotResult;
+use crate::state::BotState;
+use crate::ui::emoji::Emoji;
 use neobabu_core::events::birthday_dm::BirthdayDM;
 use poise::serenity_prelude::{Context, CreateMessage, UserId};
 
-pub async fn handle(ctx: &Context, event: BirthdayDM) -> BotResult<()> {
+pub async fn handle(ctx: &Context, state: &BotState, event: BirthdayDM) -> BotResult<()> {
     let user_id = UserId::new(event.user_id.parse()?);
 
+    let balloon = state.get_emoji(Emoji::BalloonRed);
+    let sparkle = state.get_emoji(Emoji::Sparkle);
     let belated_text = if event.is_belated { " BELATED" } else { "" };
-    let message = format!("🎂 **HAPPY{belated_text} BIRTHDAY!** 🎉");
+    let message = format!("{balloon} **HAPPY{belated_text} BIRTHDAY!** {sparkle}");
     user_id
         .dm(ctx, CreateMessage::new().content(message))
         .await?;

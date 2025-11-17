@@ -1,4 +1,5 @@
 use crate::config::BotConfig;
+use crate::ui::emoji::Emoji;
 use neobabu_core::config::Config;
 use neobabu_core::NeobabuCore;
 use std::sync::Arc;
@@ -34,6 +35,11 @@ impl BotState {
         info!("Bot state initialized");
 
         Ok(state)
+    }
+
+    pub fn get_emoji(&self, emoji: Emoji) -> String {
+        let id = self.config.emojis.id(emoji.name()).unwrap_or(&0u64);
+        format!("<:{}:{id}>", emoji.name())
     }
 }
 

@@ -18,13 +18,9 @@ pub async fn handle(ctx: &Context, event: BirthdayNotification) -> BotResult<()>
     };
 
     let server_message = format!("🎂 <@{user_id}>{age_text}, **Happy{belated_text} birthday!** 🎉");
-    let _ = channel_id
+    channel_id
         .send_message(ctx, CreateMessage::new().content(server_message))
-        .await;
-    let _ = user_id.dm(
-        ctx,
-        CreateMessage::new().content("🎂 **HAPPY BIRTHDAY!** 🎉"),
-    );
+        .await?;
 
     Ok(())
 }

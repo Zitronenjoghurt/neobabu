@@ -1,24 +1,36 @@
+use crate::events::birthday_dm::BirthdayDM;
 use crate::events::birthday_notification::BirthdayNotification;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 
+pub mod birthday_dm;
 pub mod birthday_notification;
 
 #[derive(Debug, Clone, Copy)]
 pub enum CoreEventType {
+    BirthdayDM,
     BirthdayNotification,
 }
 
 #[derive(Debug, Clone)]
 pub enum CoreEvent {
+    BirthdayDM(Box<BirthdayDM>),
     BirthdayNotification(Box<BirthdayNotification>),
 }
 
 impl CoreEvent {
     pub fn event_type(&self) -> CoreEventType {
         match self {
+            Self::BirthdayDM(_) => CoreEventType::BirthdayDM,
             Self::BirthdayNotification(_) => CoreEventType::BirthdayNotification,
         }
+    }
+
+    pub fn birthday_dm(user_id: impl Into<String>, is_belated: bool) -> Self {
+        Self::BirthdayDM(Box::new(BirthdayDM {
+            user_id: user_id.into(),
+            is_belated,
+        }))
     }
 
     pub fn birthday_notification(notification: BirthdayNotification) -> Self {

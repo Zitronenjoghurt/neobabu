@@ -4,6 +4,7 @@ use poise::serenity_prelude as serenity;
 use tokio::sync::broadcast;
 use tracing::{error, info};
 
+mod birthday_dm;
 mod birthday_notification;
 
 pub async fn listen(ctx: serenity::Context, mut rx: broadcast::Receiver<CoreEvent>) {
@@ -23,6 +24,7 @@ pub async fn listen(ctx: serenity::Context, mut rx: broadcast::Receiver<CoreEven
 
 async fn handle_event(ctx: &serenity::Context, event: CoreEvent) -> BotResult<()> {
     match event {
+        CoreEvent::BirthdayDM(event) => birthday_dm::handle(ctx, *event).await?,
         CoreEvent::BirthdayNotification(event) => {
             birthday_notification::handle(ctx, *event).await?
         }

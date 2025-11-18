@@ -1,10 +1,11 @@
 use crate::error::{BotError, BotResult};
 use crate::state::BotState;
-use crate::ui::emoji::Emoji;
+use crate::ui::emoji::EmojiType;
 use crate::Context;
 use neobabu_core::database::entity::{guild, user};
 use neobabu_core::services::Services;
 use neobabu_core::stores::Stores;
+use poise::serenity_prelude::ReactionType;
 
 #[async_trait::async_trait]
 pub trait ContextExt {
@@ -12,8 +13,12 @@ pub trait ContextExt {
     fn author_id_string(&self) -> String;
     fn guild_id_string(&self) -> Option<String>;
 
-    fn emoji(&self, emoji: Emoji) -> String {
+    fn emoji(&self, emoji: EmojiType) -> ReactionType {
         self.state().get_emoji(emoji)
+    }
+
+    fn emoji_text(&self, emoji: EmojiType) -> String {
+        self.state().get_emoji_text(emoji)
     }
 
     fn services(&self) -> &Services {

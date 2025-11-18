@@ -18,7 +18,7 @@ pub fn upcoming_date(day: u32, month: u32) -> Option<chrono::NaiveDate> {
 }
 
 pub fn upcoming_date_time(day: u32, month: u32) -> Option<chrono::DateTime<Utc>> {
-    upcoming_date(day, month).map(|date| date.and_hms_opt(0, 0, 0).map(|date| date.and_utc()))?
+    upcoming_date(day, month).map(|date| date.and_hms_opt(9, 0, 0).map(|date| date.and_utc()))?
 }
 
 pub fn is_leap_year(year: i32) -> bool {

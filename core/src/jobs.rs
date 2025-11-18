@@ -32,7 +32,7 @@ impl Scheduler {
         info!("Scheduling jobs...");
         self.schedule_job(
             "birthday_notification",
-            "0 0 9 * * *",
+            "0 5 9 * * *",
             birthday_notification::run,
         )
         .await?;

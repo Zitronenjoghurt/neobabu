@@ -3,9 +3,22 @@ use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
 use crate::ui::embed::interactive::rows::InteractiveRow;
 use crate::Context;
 use poise::serenity_prelude::{ButtonStyle, ComponentInteraction, CreateActionRow, CreateButton};
+use std::ops::Deref;
+
+pub struct AcceptRow<T: AcceptRowTrait>(pub T);
+
+impl<T> Deref for AcceptRow<T>
+where
+    T: AcceptRowTrait,
+{
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[async_trait::async_trait]
-pub trait InteractiveAcceptRow {
+pub trait AcceptRowTrait {
     async fn accept(
         &self,
         context: &Context<'_>,
@@ -27,30 +40,30 @@ pub trait InteractiveAcceptRow {
 }
 
 #[async_trait::async_trait]
-impl<T: InteractiveAcceptRow + Send + Sync> InteractiveRow for T {
-    fn render(&self) -> CreateActionRow {
-        CreateActionRow::Buttons(vec![
-            CreateButton::new("interactive_accept_row_accept")
+impl<T: AcceptRowTrait + Send + Sync> InteractiveRow for AcceptRow<T> {
+    fn render(&self, _context: &Context) -> Option<CreateActionRow> {
+        Some(CreateActionRow::Buttons(vec![
+            CreateButton::new("accept_row_accept")
                 .style(ButtonStyle::Success)
-                .label(self.accept_text()),
-            CreateButton::new("interactive_accept_row_deny")
+                .label(self.0.accept_text()),
+            CreateButton::new("accept_row_deny")
                 .style(ButtonStyle::Danger)
-                .label(self.deny_text()),
-        ])
+                .label(self.0.deny_text()),
+        ]))
     }
 
     fn matches(&self, custom_id: &str) -> bool {
-        custom_id == "interactive_accept_row_accept" || custom_id == "interactive_accept_row_deny"
+        custom_id == "accept_row_accept" || custom_id == "accept_row_deny"
     }
 
     async fn handle(
-        &self,
+        &mut self,
         context: &Context,
         interaction: &ComponentInteraction,
     ) -> BotResult<InteractiveEmbedResponse> {
         match interaction.data.custom_id.as_str() {
-            "interactive_accept_row_accept" => self.accept(context, interaction).await,
-            "interactive_accept_row_deny" => self.deny(context, interaction).await,
+            "accept_row_accept" => self.0.accept(context, interaction).await,
+            "accept_row_deny" => self.0.deny(context, interaction).await,
             _ => Ok(InteractiveEmbedResponse::new()),
         }
     }

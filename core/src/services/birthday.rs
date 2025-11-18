@@ -7,7 +7,7 @@ use sea_orm::{IntoActiveModel, Set};
 use std::ops::Add;
 use std::sync::Arc;
 
-const BIRTHDAY_UPDATE_TIMEOUT_HOURS: i64 = 24 * 150;
+const BIRTHDAY_UPDATE_TIMEOUT_HOURS: i64 = 24 * 270;
 
 pub struct BirthdayService {
     stores: Arc<Stores>,

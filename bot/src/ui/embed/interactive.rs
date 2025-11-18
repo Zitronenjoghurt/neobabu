@@ -22,6 +22,7 @@ pub struct InteractiveEmbed<'a> {
     rows: Vec<Box<dyn InteractiveRow>>,
     context: &'a Context<'a>,
     timeout: Duration,
+    allow_anyone_to_interact: bool,
 }
 
 impl<'a> InteractiveEmbed<'a> {
@@ -31,6 +32,7 @@ impl<'a> InteractiveEmbed<'a> {
             rows: vec![],
             context,
             timeout: Duration::from_secs(300),
+            allow_anyone_to_interact: false,
         }
     }
 
@@ -41,6 +43,11 @@ impl<'a> InteractiveEmbed<'a> {
 
     pub fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
+        self
+    }
+
+    pub fn allow_anyone_to_interact(mut self, allow: bool) -> Self {
+        self.allow_anyone_to_interact = allow;
         self
     }
 
@@ -76,8 +83,17 @@ impl<'a> InteractiveEmbed<'a> {
 
         let mut collector_stream = collector.stream();
         while let Some(interaction) = collector_stream.next().await {
-            let Some((component_index, component)) =
-                self.find_component(&interaction.data.custom_id)
+            if !self.allow_anyone_to_interact && interaction.user.id != self.context.author().id {
+                interaction
+                    .create_response(
+                        self.context.serenity_context(),
+                        CreateInteractionResponse::Acknowledge,
+                    )
+                    .await?;
+                continue;
+            }
+
+            let Some(component_index) = self.find_component_index(&interaction.data.custom_id)
             else {
                 interaction
                     .create_response(
@@ -88,6 +104,7 @@ impl<'a> InteractiveEmbed<'a> {
                 continue;
             };
 
+            let component = self.rows.get_mut(component_index).unwrap();
             let response = component.handle(self.context, &interaction).await?;
             let do_stop = response.do_stop;
             self.handle_row_response(component_index, &interaction, response)
@@ -117,14 +134,18 @@ impl<'a> InteractiveEmbed<'a> {
     }
 
     fn render_rows(&self) -> Vec<CreateActionRow> {
-        self.rows.iter().map(|c| c.render()).collect()
+        self.rows
+            .iter()
+            .filter_map(|c| c.render(self.context))
+            .collect()
     }
 
-    fn find_component(&self, custom_id: &str) -> Option<(usize, &Box<dyn InteractiveRow>)> {
+    fn find_component_index(&self, custom_id: &str) -> Option<usize> {
         self.rows
             .iter()
             .enumerate()
             .find(|(_, c)| c.matches(custom_id))
+            .map(|(i, _)| i)
     }
 
     async fn handle_row_response(

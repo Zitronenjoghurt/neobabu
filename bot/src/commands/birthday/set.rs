@@ -2,7 +2,7 @@ use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
 use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
-use crate::ui::embed::interactive::rows::accept::InteractiveAcceptRow;
+use crate::ui::embed::interactive::rows::accept::{AcceptRow, AcceptRowTrait};
 use crate::ui::embed::interactive::InteractiveEmbed;
 use crate::ui::embed::CreateEmbedExt;
 use crate::Context;
@@ -39,7 +39,7 @@ pub async fn set(
     }
 
     InteractiveEmbed::new(&ctx, embed)
-        .row(AcceptRow { day, month, year })
+        .row(AcceptRow(BirthdaySetRow { day, month, year }))
         .timeout(std::time::Duration::from_secs(120))
         .run()
         .await?;
@@ -47,14 +47,14 @@ pub async fn set(
     Ok(())
 }
 
-struct AcceptRow {
+struct BirthdaySetRow {
     day: i16,
     month: i16,
     year: Option<i16>,
 }
 
 #[async_trait::async_trait]
-impl InteractiveAcceptRow for AcceptRow {
+impl AcceptRowTrait for BirthdaySetRow {
     async fn accept(
         &self,
         context: &Context<'_>,

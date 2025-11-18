@@ -10,7 +10,7 @@ pub mod events;
 pub mod jobs;
 pub mod services;
 pub mod stores;
-mod types;
+pub mod types;
 mod utils;
 
 #[derive(Clone)]

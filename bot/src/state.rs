@@ -1,7 +1,8 @@
 use crate::config::BotConfig;
-use crate::ui::emoji::Emoji;
+use crate::ui::emoji::EmojiType;
 use neobabu_core::config::Config;
 use neobabu_core::NeobabuCore;
+use poise::serenity_prelude::{EmojiId, ReactionType};
 use std::sync::Arc;
 use tracing::info;
 
@@ -37,7 +38,17 @@ impl BotState {
         Ok(state)
     }
 
-    pub fn get_emoji(&self, emoji: Emoji) -> String {
+    pub fn get_emoji(&self, emoji: EmojiType) -> ReactionType {
+        let name = emoji.name();
+        let id = self.config.emojis.id(name).unwrap_or(&0u64);
+        ReactionType::Custom {
+            animated: false,
+            id: EmojiId::new(*id),
+            name: Some(name.to_string()),
+        }
+    }
+
+    pub fn get_emoji_text(&self, emoji: EmojiType) -> String {
         let id = self.config.emojis.id(emoji.name()).unwrap_or(&0u64);
         format!("<:{}:{id}>", emoji.name())
     }

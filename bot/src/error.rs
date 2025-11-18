@@ -37,33 +37,34 @@ pub async fn handler(framework_error: FrameworkError<'_, BotState, BotError>) {
             remaining_cooldown,
             ctx,
             ..
-        } => handle_cooldown_hit(remaining_cooldown, ctx).await,
+        } => handle_cooldown_hit(remaining_cooldown, &ctx).await,
         FrameworkError::Command { error, ctx, .. } => {
-            handle_command(error, ctx).await;
+            let embed = handle_command_error(error, &ctx).await;
+            let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
         }
         FrameworkError::CommandPanic { payload, ctx, .. } => {
-            handle_command_panic(payload, ctx).await
+            handle_command_panic(payload, &ctx).await
         }
         FrameworkError::CommandCheckFailed { error, ctx, .. } => {
-            handle_command_check_failure(error, ctx).await
+            handle_command_check_failure(error, &ctx).await
         }
-        FrameworkError::DmOnly { ctx, .. } => handle_dm_only(ctx).await,
+        FrameworkError::DmOnly { ctx, .. } => handle_dm_only(&ctx).await,
         FrameworkError::EventHandler { error, event, .. } => {
             error!("An error occurred in event handler for event '{event:#?}': {error}")
         }
-        FrameworkError::GuildOnly { ctx, .. } => handle_guild_only(ctx).await,
+        FrameworkError::GuildOnly { ctx, .. } => handle_guild_only(&ctx).await,
         FrameworkError::MissingBotPermissions {
             missing_permissions,
             ctx,
             ..
-        } => handle_missing_bot_permissions(missing_permissions, ctx).await,
+        } => handle_missing_bot_permissions(missing_permissions, &ctx).await,
         FrameworkError::MissingUserPermissions {
             missing_permissions,
             ctx,
             ..
-        } => handle_missing_user_permissions(missing_permissions, ctx).await,
-        FrameworkError::NotAnOwner { ctx, .. } => handle_not_an_owner(ctx).await,
-        FrameworkError::NsfwOnly { ctx, .. } => handle_nsfw_only(ctx).await,
+        } => handle_missing_user_permissions(missing_permissions, &ctx).await,
+        FrameworkError::NotAnOwner { ctx, .. } => handle_not_an_owner(&ctx).await,
+        FrameworkError::NsfwOnly { ctx, .. } => handle_nsfw_only(&ctx).await,
         FrameworkError::Setup {
             error,
             data_about_bot,
@@ -75,7 +76,7 @@ pub async fn handler(framework_error: FrameworkError<'_, BotState, BotError>) {
     }
 }
 
-async fn handle_cooldown_hit(remaining_cooldown: std::time::Duration, ctx: Context<'_>) {
+async fn handle_cooldown_hit(remaining_cooldown: std::time::Duration, ctx: &Context<'_>) {
     let embed = CreateEmbed::new()
         .error()
         .title("Cooldown")
@@ -86,7 +87,7 @@ async fn handle_cooldown_hit(remaining_cooldown: std::time::Duration, ctx: Conte
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 
-async fn handle_command(error: BotError, ctx: Context<'_>) {
+pub async fn handle_command_error(error: BotError, ctx: &Context<'_>) -> CreateEmbed {
     let text = if error.is_user_error() {
         error.to_string()
     } else {
@@ -100,11 +101,10 @@ async fn handle_command(error: BotError, ctx: Context<'_>) {
         format!("An unexpected error occurred. If you report this, please include the ID `#{id}`.")
     };
 
-    let embed = CreateEmbed::new().error().title("ERROR").description(text);
-    let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
+    CreateEmbed::new().error().title("ERROR").description(text)
 }
 
-async fn handle_command_panic(payload: Option<String>, ctx: Context<'_>) {
+async fn handle_command_panic(payload: Option<String>, ctx: &Context<'_>) {
     let id = nanoid!(12);
     error!(
         payload = payload,
@@ -122,7 +122,7 @@ async fn handle_command_panic(payload: Option<String>, ctx: Context<'_>) {
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 
-async fn handle_command_check_failure(error: Option<BotError>, ctx: Context<'_>) {
+async fn handle_command_check_failure(error: Option<BotError>, ctx: &Context<'_>) {
     let embed = if let Some(error) = error {
         CreateEmbed::new()
             .error()
@@ -137,7 +137,7 @@ async fn handle_command_check_failure(error: Option<BotError>, ctx: Context<'_>)
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 
-async fn handle_dm_only(ctx: Context<'_>) {
+async fn handle_dm_only(ctx: &Context<'_>) {
     let embed = CreateEmbed::new()
         .error()
         .title("DM Only Command")
@@ -145,7 +145,7 @@ async fn handle_dm_only(ctx: Context<'_>) {
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 
-async fn handle_guild_only(ctx: Context<'_>) {
+async fn handle_guild_only(ctx: &Context<'_>) {
     let embed = CreateEmbed::new()
         .error()
         .title("Guild Only Command")
@@ -153,7 +153,7 @@ async fn handle_guild_only(ctx: Context<'_>) {
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 
-async fn handle_missing_bot_permissions(permissions: Permissions, ctx: Context<'_>) {
+async fn handle_missing_bot_permissions(permissions: Permissions, ctx: &Context<'_>) {
     let embed = CreateEmbed::new()
         .error()
         .title("Missing Permissions")
@@ -163,7 +163,7 @@ async fn handle_missing_bot_permissions(permissions: Permissions, ctx: Context<'
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 
-async fn handle_missing_user_permissions(permissions: Option<Permissions>, ctx: Context<'_>) {
+async fn handle_missing_user_permissions(permissions: Option<Permissions>, ctx: &Context<'_>) {
     let mut embed = CreateEmbed::new().error().title("Missing Permissions");
 
     if let Some(permissions) = permissions {
@@ -177,7 +177,7 @@ async fn handle_missing_user_permissions(permissions: Option<Permissions>, ctx: 
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 
-async fn handle_not_an_owner(ctx: Context<'_>) {
+async fn handle_not_an_owner(ctx: &Context<'_>) {
     let embed = CreateEmbed::new()
         .error()
         .title("Not an Owner")
@@ -185,7 +185,7 @@ async fn handle_not_an_owner(ctx: Context<'_>) {
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 
-async fn handle_nsfw_only(ctx: Context<'_>) {
+async fn handle_nsfw_only(ctx: &Context<'_>) {
     let embed = CreateEmbed::new()
         .error()
         .title("NSFW Only Command")

@@ -1,4 +1,4 @@
-use crate::error::BotResult;
+use crate::error::{handle_command_error, BotResult};
 use crate::ui::color::UiColor;
 use crate::ui::embed::interactive::response::{
     InteractiveEmbedResponse, InteractiveEmbedRowUpdate,
@@ -10,7 +10,7 @@ use poise::serenity_prelude::{
     ComponentInteraction, CreateActionRow, CreateEmbed, CreateEmbedFooter,
     CreateInteractionResponse, CreateInteractionResponseMessage,
 };
-use poise::CreateReply;
+use poise::{CreateReply, ReplyHandle};
 use rows::InteractiveRow;
 use std::time::Duration;
 
@@ -45,17 +45,30 @@ impl<'a> InteractiveEmbed<'a> {
     }
 
     pub async fn run(mut self) -> BotResult<()> {
-        let action_rows = self.render_rows();
-
         let reply_handle = self
             .context
             .send(
                 CreateReply::default()
                     .embed(self.embed.clone())
-                    .components(action_rows.clone()),
+                    .components(self.render_rows()),
             )
             .await?;
 
+        let result = self.do_run(&reply_handle).await;
+        if let Err(error) = result {
+            let error_embed = handle_command_error(error, self.context).await;
+            reply_handle
+                .edit(
+                    *self.context,
+                    CreateReply::default().embed(error_embed).components(vec![]),
+                )
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    async fn do_run(&mut self, reply_handle: &ReplyHandle<'_>) -> BotResult<()> {
         let message = reply_handle.message().await?;
         let collector = message
             .await_component_interaction(self.context.serenity_context())
@@ -87,6 +100,7 @@ impl<'a> InteractiveEmbed<'a> {
 
         let timeout_embed = self
             .embed
+            .clone()
             .footer(CreateEmbedFooter::new("This interaction has timed out."))
             .ui_color(UiColor::Gray);
 

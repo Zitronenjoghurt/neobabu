@@ -2,8 +2,9 @@ use crate::database::entity::user_birthday;
 use crate::error::{CoreError, CoreResult};
 use crate::events::birthday_notification::BirthdayNotification;
 use crate::events::CoreEvent;
+use crate::utils::upcoming_date_time;
 use crate::NeobabuCore;
-use chrono::{DateTime, Datelike, NaiveDate};
+use chrono::{DateTime, Datelike};
 use futures::StreamExt;
 use sea_orm::{IntoActiveModel, Set};
 use tracing::{error, info};
@@ -38,71 +39,12 @@ async fn handle_user_birthday(
     user_birthday: user_birthday::Model,
     today: DateTime<chrono::Utc>,
 ) -> CoreResult<()> {
-    let (month, day) = adjust_for_leap_day(
-        today.year(),
-        user_birthday.month as u32,
-        user_birthday.day as u32,
-    );
-
-    let Some(this_years_birthday) = NaiveDate::from_ymd_opt(today.year(), month, day) else {
-        return Err(CoreError::invalid_birthday("Invalid date"));
-    };
-
-    let already_announced_this_year = match user_birthday.last_announced_at {
-        None => false,
-        Some(last_announced) => last_announced.date() >= this_years_birthday,
-    };
-    if already_announced_this_year {
+    let next_birthday = user_birthday.next_birthday.and_utc();
+    if next_birthday > today {
         return Ok(());
     }
 
-    let birthday_passed_this_year = today.date_naive() >= this_years_birthday;
-
-    if birthday_passed_this_year {
-        handle_birthday_notification(core, user_birthday, today, this_years_birthday).await?;
-        return Ok(());
-    }
-
-    // This whole edge-case is specifically for the case if a user's birthday was on the 31st of December
-    // and the bot failed to run the job before the 1st of January in the next year.
-    let (month, day) = adjust_for_leap_day(
-        today.year() - 1,
-        user_birthday.month as u32,
-        user_birthday.day as u32,
-    );
-
-    let Some(last_years_birthday) = NaiveDate::from_ymd_opt(today.year() - 1, month, day) else {
-        return Err(CoreError::invalid_birthday("Invalid date"));
-    };
-
-    let missed_last_year = match user_birthday.last_announced_at {
-        None => true,
-        Some(last_announced) => last_announced.date() < last_years_birthday,
-    };
-
-    if missed_last_year {
-        handle_birthday_notification(core, user_birthday, today, last_years_birthday).await?;
-        return Ok(());
-    }
-
-    Ok(())
-}
-
-async fn handle_birthday_notification(
-    core: &NeobabuCore,
-    user_birthday: user_birthday::Model,
-    today: DateTime<chrono::Utc>,
-    last_birthday: NaiveDate,
-) -> CoreResult<()> {
-    let belated_days = today
-        .date_naive()
-        .signed_duration_since(last_birthday)
-        .num_days();
-    if belated_days > 7 {
-        return Ok(());
-    }
-    let is_belated = belated_days > 0;
-
+    let is_belated = next_birthday.date_naive() != today.date_naive();
     let age = user_birthday
         .year
         .map(|year| (today.year() - year as i32) as u8);
@@ -146,24 +88,14 @@ async fn handle_birthday_notification(
     }
     drop(user_guilds);
 
+    let next_birthday = upcoming_date_time(user_birthday.day as u32, user_birthday.month as u32)
+        .ok_or(CoreError::invalid_birthday("Invalid date."))?;
     let mut active_user_birthday = user_birthday.into_active_model();
-    active_user_birthday.last_announced_at = Set(Some(today.naive_utc()));
+    active_user_birthday.next_birthday = Set(next_birthday.naive_utc());
     core.stores
         .user_birthday
         .update(active_user_birthday)
         .await?;
 
     Ok(())
-}
-
-fn adjust_for_leap_day(year: i32, month: u32, day: u32) -> (u32, u32) {
-    if month == 2 && day == 29 && !is_leap_year(year) {
-        (2, 28)
-    } else {
-        (month, day)
-    }
-}
-
-fn is_leap_year(year: i32) -> bool {
-    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 }

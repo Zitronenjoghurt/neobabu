@@ -7,6 +7,7 @@ down:
 	docker compose -f docker/docker-compose.yml down
 
 build:
+	docker image prune -f
 	docker compose -f docker/docker-compose.yml build
 
 logs:

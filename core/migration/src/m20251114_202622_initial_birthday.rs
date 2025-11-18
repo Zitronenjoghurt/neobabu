@@ -14,7 +14,7 @@ impl MigrationTrait for Migration {
                     .col(small_integer(UserBirthday::Day))
                     .col(small_integer(UserBirthday::Month))
                     .col(small_integer_null(UserBirthday::Year))
-                    .col(timestamp_null(UserBirthday::LastAnnouncedAt))
+                    .col(timestamp(UserBirthday::NextBirthday))
                     .col(timestamp(UserBirthday::CreatedAt).default(Expr::current_timestamp()))
                     .col(timestamp(UserBirthday::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
@@ -81,7 +81,7 @@ enum UserBirthday {
     Day,
     Month,
     Year,
-    LastAnnouncedAt,
+    NextBirthday,
     CreatedAt,
     UpdatedAt,
 }

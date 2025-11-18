@@ -1,6 +1,7 @@
 use crate::database::entity::{user, user_birthday};
 use crate::error::{CoreError, CoreResult};
 use crate::stores::Stores;
+use crate::utils::upcoming_date_time;
 use chrono::Duration;
 use sea_orm::{IntoActiveModel, Set};
 use std::ops::Add;
@@ -45,6 +46,8 @@ impl BirthdayService {
         year: Option<i16>,
     ) -> CoreResult<()> {
         self.validate_birthday(day, month, year)?;
+        let upcoming_birthday = upcoming_date_time(day as u32, month as u32)
+            .ok_or(CoreError::invalid_birthday("Invalid date."))?;
 
         if let Some(user_birthday) = self.stores.user_birthday.find_by_user_id(&user.id).await? {
             let now = chrono::Utc::now();
@@ -61,6 +64,7 @@ impl BirthdayService {
             active.day = Set(day);
             active.month = Set(month);
             active.year = Set(year);
+            active.next_birthday = Set(upcoming_birthday.naive_utc());
             self.stores.user_birthday.update(active).await?;
         } else {
             let new = user_birthday::ActiveModel {
@@ -68,6 +72,7 @@ impl BirthdayService {
                 day: Set(day),
                 month: Set(month),
                 year: Set(year),
+                next_birthday: Set(upcoming_birthday.naive_utc()),
                 ..Default::default()
             };
             self.stores.user_birthday.insert(new).await?;

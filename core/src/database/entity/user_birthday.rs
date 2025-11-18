@@ -10,7 +10,7 @@ pub struct Model {
     pub day: i16,
     pub month: i16,
     pub year: Option<i16>,
-    pub last_announced_at: Option<DateTime>,
+    pub next_birthday: DateTime,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

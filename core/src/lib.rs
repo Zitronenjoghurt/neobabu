@@ -11,6 +11,7 @@ pub mod jobs;
 pub mod services;
 pub mod stores;
 mod types;
+mod utils;
 
 #[derive(Clone)]
 pub struct NeobabuCore {

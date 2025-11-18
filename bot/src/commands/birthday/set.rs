@@ -1,8 +1,9 @@
 use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
+use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
 use crate::ui::embed::interactive::rows::accept::InteractiveAcceptRow;
-use crate::ui::embed::interactive::{InteractionResult, InteractiveEmbed};
+use crate::ui::embed::interactive::InteractiveEmbed;
 use crate::ui::embed::CreateEmbedExt;
 use crate::Context;
 use poise::serenity_prelude::{ComponentInteraction, CreateEmbed};
@@ -23,12 +24,6 @@ pub async fn set(
     #[min = 1900]
     year: Option<i16>,
 ) -> BotResult<()> {
-    let user = ctx.fetch_author_model().await?;
-    ctx.services()
-        .birthday
-        .set_birthday(&user, day, month, year)
-        .await?;
-
     let mut embed = CreateEmbed::default()
         .warning_user(&ctx.author())
         .title("Do you want to set your birthday?")
@@ -44,7 +39,7 @@ pub async fn set(
     }
 
     InteractiveEmbed::new(&ctx, embed)
-        .row(AcceptRow)
+        .row(AcceptRow { day, month, year })
         .timeout(std::time::Duration::from_secs(120))
         .run()
         .await?;
@@ -52,34 +47,46 @@ pub async fn set(
     Ok(())
 }
 
-struct AcceptRow;
+struct AcceptRow {
+    day: i16,
+    month: i16,
+    year: Option<i16>,
+}
 
+#[async_trait::async_trait]
 impl InteractiveAcceptRow for AcceptRow {
-    fn accept(
+    async fn accept(
         &self,
         context: &Context<'_>,
         _interaction: &ComponentInteraction,
-    ) -> InteractionResult {
-        InteractionResult::Stop(
+    ) -> BotResult<InteractiveEmbedResponse> {
+        let user = context.fetch_author_model().await?;
+        context
+            .services()
+            .birthday
+            .set_birthday(&user, self.day, self.month, self.year)
+            .await?;
+
+        Ok(InteractiveEmbedResponse::halt_with(
             CreateEmbed::default()
                 .success_user(&context.author())
                 .title("Birthday set")
                 .description("Your birthday was set successfully."),
-        )
+        ))
     }
 
-    fn deny(
+    async fn deny(
         &self,
         context: &Context<'_>,
         _interaction: &ComponentInteraction,
-    ) -> InteractionResult {
-        InteractionResult::Stop(
+    ) -> BotResult<InteractiveEmbedResponse> {
+        Ok(InteractiveEmbedResponse::halt_with(
             CreateEmbed::default()
                 .ui_color(UiColor::Gray)
                 .user(&context.author())
                 .title("Birthday not set")
                 .description("Your birthday was not set."),
-        )
+        ))
     }
 
     fn accept_text(&self) -> &'static str {

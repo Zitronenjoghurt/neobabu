@@ -1,14 +1,21 @@
-use crate::ui::embed::interactive::{InteractionResult, InteractiveRow};
+use crate::error::BotResult;
+use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
+use crate::ui::embed::interactive::rows::InteractiveRow;
 use crate::Context;
 use poise::serenity_prelude::{ButtonStyle, ComponentInteraction, CreateActionRow, CreateButton};
 
+#[async_trait::async_trait]
 pub trait InteractiveAcceptRow {
-    fn accept(
+    async fn accept(
         &self,
         context: &Context<'_>,
         interaction: &ComponentInteraction,
-    ) -> InteractionResult;
-    fn deny(&self, context: &Context<'_>, interaction: &ComponentInteraction) -> InteractionResult;
+    ) -> BotResult<InteractiveEmbedResponse>;
+    async fn deny(
+        &self,
+        context: &Context<'_>,
+        interaction: &ComponentInteraction,
+    ) -> BotResult<InteractiveEmbedResponse>;
 
     fn accept_text(&self) -> &'static str {
         "Accept"
@@ -40,11 +47,11 @@ impl<T: InteractiveAcceptRow + Send + Sync> InteractiveRow for T {
         &self,
         context: &Context,
         interaction: &ComponentInteraction,
-    ) -> InteractionResult {
+    ) -> BotResult<InteractiveEmbedResponse> {
         match interaction.data.custom_id.as_str() {
-            "interactive_accept_row_accept" => self.accept(context, interaction),
-            "interactive_accept_row_deny" => self.deny(context, interaction),
-            _ => InteractionResult::Acknowledge,
+            "interactive_accept_row_accept" => self.accept(context, interaction).await,
+            "interactive_accept_row_deny" => self.deny(context, interaction).await,
+            _ => Ok(InteractiveEmbedResponse::new()),
         }
     }
 }

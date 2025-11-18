@@ -1,5 +1,8 @@
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
+use crate::ui::embed::interactive::response::{
+    InteractiveEmbedResponse, InteractiveEmbedRowUpdate,
+};
 use crate::ui::embed::CreateEmbedExt;
 use crate::Context;
 use poise::futures_util::StreamExt;
@@ -8,28 +11,11 @@ use poise::serenity_prelude::{
     CreateInteractionResponse, CreateInteractionResponseMessage,
 };
 use poise::CreateReply;
+use rows::InteractiveRow;
 use std::time::Duration;
 
+pub mod response;
 pub mod rows;
-
-pub enum InteractionResult {
-    Continue(CreateEmbed),
-    Stop(CreateEmbed),
-    Acknowledge,
-}
-
-#[async_trait::async_trait]
-pub trait InteractiveRow: Send + Sync {
-    fn render(&self) -> CreateActionRow;
-
-    fn matches(&self, custom_id: &str) -> bool;
-
-    async fn handle(
-        &self,
-        context: &Context,
-        interaction: &ComponentInteraction,
-    ) -> InteractionResult;
-}
 
 pub struct InteractiveEmbed<'a> {
     embed: CreateEmbed,
@@ -58,7 +44,7 @@ impl<'a> InteractiveEmbed<'a> {
         self
     }
 
-    pub async fn run(self) -> BotResult<()> {
+    pub async fn run(mut self) -> BotResult<()> {
         let action_rows = self.render_rows();
 
         let reply_handle = self
@@ -77,7 +63,9 @@ impl<'a> InteractiveEmbed<'a> {
 
         let mut collector_stream = collector.stream();
         while let Some(interaction) = collector_stream.next().await {
-            let Some(component) = self.find_component(&interaction.data.custom_id) else {
+            let Some((component_index, component)) =
+                self.find_component(&interaction.data.custom_id)
+            else {
                 interaction
                     .create_response(
                         self.context.serenity_context(),
@@ -87,43 +75,13 @@ impl<'a> InteractiveEmbed<'a> {
                 continue;
             };
 
-            let interaction_result = component.handle(self.context, &interaction).await;
+            let response = component.handle(self.context, &interaction).await?;
+            let do_stop = response.do_stop;
+            self.handle_row_response(component_index, &interaction, response)
+                .await?;
 
-            match interaction_result {
-                InteractionResult::Continue(new_embed) => {
-                    let action_rows = self.render_rows();
-                    interaction
-                        .create_response(
-                            self.context.serenity_context(),
-                            CreateInteractionResponse::UpdateMessage(
-                                CreateInteractionResponseMessage::default()
-                                    .embed(new_embed)
-                                    .components(action_rows),
-                            ),
-                        )
-                        .await?;
-                }
-                InteractionResult::Stop(new_embed) => {
-                    interaction
-                        .create_response(
-                            self.context.serenity_context(),
-                            CreateInteractionResponse::UpdateMessage(
-                                CreateInteractionResponseMessage::default()
-                                    .embed(new_embed)
-                                    .components(vec![]),
-                            ),
-                        )
-                        .await?;
-                    return Ok(());
-                }
-                InteractionResult::Acknowledge => {
-                    interaction
-                        .create_response(
-                            self.context.serenity_context(),
-                            CreateInteractionResponse::Acknowledge,
-                        )
-                        .await?;
-                }
+            if do_stop {
+                return Ok(());
             }
         }
 
@@ -148,7 +106,55 @@ impl<'a> InteractiveEmbed<'a> {
         self.rows.iter().map(|c| c.render()).collect()
     }
 
-    fn find_component(&self, custom_id: &str) -> Option<&Box<dyn InteractiveRow>> {
-        self.rows.iter().find(|c| c.matches(custom_id))
+    fn find_component(&self, custom_id: &str) -> Option<(usize, &Box<dyn InteractiveRow>)> {
+        self.rows
+            .iter()
+            .enumerate()
+            .find(|(_, c)| c.matches(custom_id))
+    }
+
+    async fn handle_row_response(
+        &mut self,
+        component_index: usize,
+        interaction: &ComponentInteraction,
+        response: InteractiveEmbedResponse,
+    ) -> BotResult<()> {
+        if response.has_no_change() {
+            interaction
+                .create_response(
+                    self.context.serenity_context(),
+                    CreateInteractionResponse::Acknowledge,
+                )
+                .await?;
+            return Ok(());
+        }
+
+        match response.row_update {
+            InteractiveEmbedRowUpdate::Keep => {}
+            InteractiveEmbedRowUpdate::Remove => {
+                self.rows.remove(component_index);
+            }
+            InteractiveEmbedRowUpdate::RemoveAll => self.rows = vec![],
+            InteractiveEmbedRowUpdate::Replace(row) => self.rows[component_index] = row,
+            InteractiveEmbedRowUpdate::ReplaceAll(rows) => self.rows = rows,
+        };
+
+        let action_rows = self.render_rows();
+        if let Some(embed) = response.embed {
+            self.embed = embed;
+        }
+
+        interaction
+            .create_response(
+                self.context.serenity_context(),
+                CreateInteractionResponse::UpdateMessage(
+                    CreateInteractionResponseMessage::default()
+                        .embed(self.embed.clone())
+                        .components(action_rows),
+                ),
+            )
+            .await?;
+
+        Ok(())
     }
 }

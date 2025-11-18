@@ -2,6 +2,8 @@
 
 pub use super::guild::Entity as Guild;
 pub use super::guild_birthday::Entity as GuildBirthday;
+pub use super::rps_games::Entity as RpsGames;
+pub use super::rps_user::Entity as RpsUser;
 pub use super::user::Entity as User;
 pub use super::user_birthday::Entity as UserBirthday;
 pub use super::user_guild::Entity as UserGuild;

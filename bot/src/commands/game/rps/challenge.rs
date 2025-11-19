@@ -11,8 +11,9 @@ use crate::ui::emoji::EmojiType;
 use crate::ui::time::format_time_relative_at;
 use crate::Context;
 use chrono::{DateTime, Utc};
-use neobabu_core::database::entity::user;
-use neobabu_core::services::rock_paper_scissors::RPSChoice;
+use neobabu_core::games::rps::choice::RPSChoice;
+use neobabu_core::games::rps::state::RPSState;
+use neobabu_core::games::rps::RPSGame;
 use poise::serenity_prelude::{
     ButtonStyle, ComponentInteraction, CreateActionRow, CreateButton, CreateEmbed, User,
 };
@@ -46,22 +47,18 @@ pub async fn challenge(ctx: Context<'_>, opponent: User) -> BotResult<()> {
             user_1.id, user_2.id
         ));
 
-    let choice_2 = if opponent.bot {
-        Some(RPSChoice::random())
-    } else {
-        None
-    };
+    let mut game = RPSGame::new(user_1, user_2);
+    if opponent.bot {
+        game.choice_2 = Some(RPSChoice::random());
+    }
 
     let row = RPSRow {
-        user_1,
-        user_2,
-        choice_1: None,
-        choice_2,
+        game,
         timeout_at: Utc::now() + Duration::from_secs(300),
         bot_session: opponent.bot,
     };
 
-    let embed = row.build_embed(&ctx, &None);
+    let embed = row.build_embed(&ctx);
 
     InteractiveEmbed::new(&ctx, embed)
         .row(row)
@@ -76,18 +73,15 @@ pub async fn challenge(ctx: Context<'_>, opponent: User) -> BotResult<()> {
 }
 
 struct RPSRow {
-    user_1: user::Model,
-    user_2: user::Model,
-    choice_1: Option<RPSChoice>,
-    choice_2: Option<RPSChoice>,
+    game: RPSGame,
     timeout_at: DateTime<Utc>,
     bot_session: bool,
 }
 
 impl RPSRow {
-    pub fn build_embed(&self, context: &Context, win_state: &Option<(bool, bool)>) -> CreateEmbed {
-        let description = self.build_description(context, win_state);
-        let color = self.build_color(win_state);
+    pub fn build_embed(&self, context: &Context) -> CreateEmbed {
+        let description = self.build_description(context);
+        let color = self.build_color();
 
         CreateEmbed::new()
             .title("Rock Paper Scissors")
@@ -95,8 +89,10 @@ impl RPSRow {
             .description(description)
     }
 
-    fn build_description(&self, context: &Context, win_state: &Option<(bool, bool)>) -> String {
-        let time_left = if win_state.is_none() {
+    fn build_description(&self, context: &Context) -> String {
+        let state = self.game.state();
+
+        let time_left = if state.is_ongoing() {
             format!(
                 "\n\n*{} Game ends {}*",
                 context.emoji_text(EmojiType::Clock),
@@ -106,109 +102,113 @@ impl RPSRow {
             "".to_string()
         };
 
-        let face_1 = if let Some((winner_1, draw)) = win_state {
-            if *draw || !*winner_1 {
-                context.emoji_text(EmojiType::random_loser())
-            } else {
-                context.emoji_text(EmojiType::random_winner())
-            }
-        } else {
-            if self.choice_1.is_some() {
-                context.emoji_text(EmojiType::FaceShushing)
-            } else {
-                context.emoji_text(EmojiType::FaceThinking)
-            }
-        };
+        let face_1 = context.emoji_text(self.get_face(true));
+        let choice_1 = self.get_choice_text(context, true);
 
-        let choice_1 = if let Some(choice) = &self.choice_1 {
-            if win_state.is_some() {
-                format!("**chose** {}", Self::emoji_from_choice(context, *choice))
-            } else {
-                "**chose `???`**".to_string()
-            }
-        } else {
-            "*is thinking...*".to_string()
-        };
+        let face_2 = context.emoji_text(self.get_face(false));
+        let choice_2 = self.get_choice_text(context, false);
 
-        let face_2 = if self.bot_session {
-            context.emoji_text(EmojiType::FaceRobot)
-        } else if let Some((winner_1, draw)) = win_state {
-            if *draw || *winner_1 {
-                context.emoji_text(EmojiType::random_loser())
-            } else {
-                context.emoji_text(EmojiType::random_winner())
-            }
-        } else {
-            if self.choice_2.is_some() {
-                context.emoji_text(EmojiType::FaceShushing)
-            } else {
-                context.emoji_text(EmojiType::FaceThinking)
-            }
-        };
-
-        let choice_2 = if let Some(choice) = &self.choice_2 {
-            if win_state.is_some() {
-                format!("**chose** {}", Self::emoji_from_choice(context, *choice))
-            } else {
-                "**chose `???`**".to_string()
-            }
-        } else {
-            "*is thinking...*".to_string()
-        };
-
-        let state = match win_state {
-            Some((_, true)) => format!(
-                "\n\n**{} It's a draw!**",
-                context.emoji_text(EmojiType::Pvp)
-            ),
-            Some((true, false)) => format!(
-                "\n\n{} <@{}> **wins!**",
-                context.emoji_text(EmojiType::Trophy),
-                self.user_1.id,
-            ),
-            Some((false, false)) => format!(
-                "\n\n{} <@{}> **wins!**",
-                context.emoji_text(EmojiType::Trophy),
-                self.user_2.id,
-            ),
-            None => "".to_string(),
-        };
+        let state = self.get_state_text(context);
 
         format!(
             "{face_1} <@{}> {choice_1}\n{face_2} <@{}> {choice_2}{state}{time_left}",
-            self.user_1.id, self.user_2.id
+            self.game.user_1.id, self.game.user_2.id
         )
     }
 
-    fn build_color(&self, win_state: &Option<(bool, bool)>) -> UiColor {
-        match win_state {
-            Some((true, false)) => UiColor::Success,
-            Some((false, false)) => UiColor::Error,
-            Some((_, true)) => UiColor::Warning,
-            None => UiColor::Pink,
+    fn build_color(&self) -> UiColor {
+        match self.game.state() {
+            RPSState::Winner1 => UiColor::Success,
+            RPSState::Winner2 => UiColor::Error,
+            RPSState::Draw => UiColor::Warning,
+            _ => UiColor::Pink,
         }
     }
 
-    fn determine_winner(&self) -> Option<(bool, bool)> {
-        let Some(choice_1) = self.choice_1 else {
-            return None;
-        };
-        let Some(choice_2) = self.choice_2 else {
-            return None;
+    fn get_face(&self, is_1: bool) -> EmojiType {
+        if self.bot_session && !is_1 {
+            return EmojiType::FaceRobot;
+        }
+
+        match self.game.state() {
+            RPSState::WaitingForBoth => EmojiType::FaceThinking,
+            RPSState::WaitingFor1 => {
+                if is_1 {
+                    EmojiType::FaceThinking
+                } else {
+                    EmojiType::FaceShushing
+                }
+            }
+            RPSState::WaitingFor2 => {
+                if is_1 {
+                    EmojiType::FaceShushing
+                } else {
+                    EmojiType::FaceThinking
+                }
+            }
+            RPSState::Winner1 => {
+                if is_1 {
+                    EmojiType::random_winner()
+                } else {
+                    EmojiType::random_loser()
+                }
+            }
+            RPSState::Winner2 => {
+                if is_1 {
+                    EmojiType::random_loser()
+                } else {
+                    EmojiType::random_winner()
+                }
+            }
+            RPSState::Draw => EmojiType::random_loser(),
+        }
+    }
+
+    fn get_choice_text(&self, context: &Context, is_1: bool) -> String {
+        let state = self.game.state();
+        let choice = if is_1 {
+            self.game.choice_1
+        } else {
+            self.game.choice_2
         };
 
-        let is_draw = choice_1 == choice_2;
-        if is_draw {
-            return Some((false, true));
-        };
+        if let Some(choice) = choice {
+            if state.is_ongoing() {
+                "**chose `???`**".to_string()
+            } else {
+                format!("**chose** {}", Self::emoji_from_choice(context, choice))
+            }
+        } else {
+            "*is thinking...*".to_string()
+        }
+    }
 
-        let is_user_1_winner = match (choice_1, choice_2) {
-            (RPSChoice::Rock, RPSChoice::Scissors) => true,
-            (RPSChoice::Paper, RPSChoice::Rock) => true,
-            (RPSChoice::Scissors, RPSChoice::Paper) => true,
-            _ => false,
-        };
-        Some((is_user_1_winner, false))
+    fn get_state_text(&self, context: &Context) -> String {
+        match self.game.state() {
+            RPSState::WaitingForBoth | RPSState::WaitingFor1 | RPSState::WaitingFor2 => {
+                "".to_string()
+            }
+            RPSState::Winner1 => {
+                format!(
+                    "\n\n{} <@{}> **wins!**",
+                    context.emoji_text(EmojiType::Trophy),
+                    self.game.user_1.id,
+                )
+            }
+            RPSState::Winner2 => {
+                format!(
+                    "\n\n{} <@{}> **wins!**",
+                    context.emoji_text(EmojiType::Trophy),
+                    self.game.user_2.id,
+                )
+            }
+            RPSState::Draw => {
+                format!(
+                    "\n\n**{} It's a draw!**",
+                    context.emoji_text(EmojiType::Pvp)
+                )
+            }
+        }
     }
 
     fn emoji_from_choice(context: &Context, choice: RPSChoice) -> String {
@@ -225,88 +225,56 @@ impl RPSRow {
         interaction: &ComponentInteraction,
         choice: RPSChoice,
     ) -> BotResult<InteractiveEmbedResponse> {
-        if interaction.user.id.to_string() == self.user_1.id && self.choice_1.is_none() {
-            self.choice_1 = Some(choice);
-        } else if interaction.user.id.to_string() == self.user_2.id && self.choice_2.is_none() {
-            self.choice_2 = Some(choice);
-        } else {
+        let did_play = self.game.play(interaction.user.id.to_string(), choice);
+        if !did_play {
             return Ok(InteractiveEmbedResponse::new());
-        };
+        }
 
-        let win_state = self.determine_winner();
-        let embed = self.build_embed(context, &win_state);
-        let row_update = if win_state.is_some() {
+        let state = self.game.state();
+        if state.is_finished() {
+            self.game.register_end(&context.data().core).await?;
+        }
+
+        let embed = self.build_embed(context);
+        let row_update = if state.is_finished() {
             InteractiveEmbedRowUpdate::Remove
         } else {
             InteractiveEmbedRowUpdate::Keep
         };
 
-        if let Some((user_1_won, draw)) = win_state {
-            if draw {
+        match state {
+            RPSState::Winner1 => {
                 context
-                    .services()
-                    .rps
-                    .register_draw(&self.user_1, &self.user_2)
-                    .await?;
-            } else if user_1_won {
-                context
-                    .services()
-                    .rps
-                    .register_winner(&self.user_1, &self.user_2)
-                    .await?;
-            } else {
-                context
-                    .services()
-                    .rps
-                    .register_winner(&self.user_2, &self.user_1)
+                    .send(CreateReply::default().content(format!(
+                        "**<@{}> `won` against <@{}>, in Rock Paper Scissors!!**",
+                        self.game.user_1.id, self.game.user_2.id
+                    )))
                     .await?;
             }
-
-            if let Some(choice) = self.choice_1 {
+            RPSState::Winner2 => {
                 context
-                    .services()
-                    .rps
-                    .register_choice(&self.user_1, choice)
+                    .send(CreateReply::default().content(format!(
+                        "**<@{}> `won` against <@{}>, in Rock Paper Scissors!!**",
+                        self.game.user_2.id, self.game.user_1.id
+                    )))
                     .await?;
             }
-
-            if let Some(choice) = self.choice_2 {
-                context
-                    .services()
-                    .rps
-                    .register_choice(&self.user_2, choice)
-                    .await?;
-            }
-
-            if draw {
+            RPSState::Draw => {
                 context
                     .send(CreateReply::default().content(format!(
                         "**<@{}> and <@{}>, your game of Rock Paper Scissors ended in a `draw`!**",
-                        self.user_1.id, self.user_2.id
-                    )))
-                    .await?;
-            } else if user_1_won {
-                context
-                    .send(CreateReply::default().content(format!(
-                        "**<@{}> `won` against <@{}>, in Rock Paper Scissors!!**",
-                        self.user_1.id, self.user_2.id
-                    )))
-                    .await?;
-            } else {
-                context
-                    .send(CreateReply::default().content(format!(
-                        "**<@{}> `won` against <@{}>, in Rock Paper Scissors!!**",
-                        self.user_2.id, self.user_1.id
+                        self.game.user_1.id, self.game.user_2.id
                     )))
                     .await?;
             }
+            _ => {}
         }
 
         Ok(InteractiveEmbedResponse::new()
             .embed(embed)
             .row_update(row_update)
-            .clear_content(win_state.is_some())
-            .do_stop(win_state.is_some()))
+            .clear_content(state.is_finished())
+            .do_stop(state.is_finished()))
     }
 }
 

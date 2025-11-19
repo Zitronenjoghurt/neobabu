@@ -1,36 +1,9 @@
 use crate::database::entity::{rps_games, rps_user, user};
 use crate::error::CoreResult;
+use crate::games::rps::choice::RPSChoice;
 use crate::stores::Stores;
-use rand::prelude::IndexedRandom;
 use sea_orm::{IntoActiveModel, Set};
-use std::fmt::Display;
 use std::sync::Arc;
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RPSChoice {
-    Rock,
-    Paper,
-    Scissors,
-}
-
-impl RPSChoice {
-    pub fn random() -> Self {
-        let choice = [Self::Rock, Self::Paper, Self::Scissors]
-            .choose(&mut rand::rng())
-            .copied();
-        choice.unwrap_or(Self::Rock)
-    }
-}
-
-impl Display for RPSChoice {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Rock => write!(f, "Rock"),
-            Self::Paper => write!(f, "Paper"),
-            Self::Scissors => write!(f, "Scissors"),
-        }
-    }
-}
 
 pub struct RockPaperScissorsService {
     stores: Arc<Stores>,

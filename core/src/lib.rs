@@ -7,6 +7,7 @@ pub mod config;
 pub mod database;
 pub mod error;
 pub mod events;
+pub mod games;
 pub mod jobs;
 pub mod services;
 pub mod stores;

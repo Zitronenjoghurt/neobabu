@@ -3,6 +3,8 @@ use poise::serenity_prelude::CreateEmbed;
 
 #[derive(Default)]
 pub struct InteractiveEmbedResponse {
+    pub content: Option<String>,
+    pub clear_content: bool,
     pub embed: Option<CreateEmbed>,
     pub do_stop: bool,
     pub row_update: InteractiveEmbedRowUpdate,
@@ -11,6 +13,16 @@ pub struct InteractiveEmbedResponse {
 impl InteractiveEmbedResponse {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn content(mut self, content: impl Into<String>) -> Self {
+        self.content = Some(content.into());
+        self
+    }
+
+    pub fn clear_content(mut self, clear_content: bool) -> Self {
+        self.clear_content = clear_content;
+        self
     }
 
     pub fn embed(mut self, embed: CreateEmbed) -> Self {
@@ -23,12 +35,22 @@ impl InteractiveEmbedResponse {
         self
     }
 
+    pub fn do_stop(mut self, stop: bool) -> Self {
+        self.do_stop = stop;
+        self
+    }
+
     pub fn stop_with_embed(embed: CreateEmbed) -> Self {
         Self::new().embed(embed).stop()
     }
 
     pub fn halt_with(embed: CreateEmbed) -> Self {
         Self::new().embed(embed).stop().remove_all_rows()
+    }
+
+    pub fn row_update(mut self, row_update: InteractiveEmbedRowUpdate) -> Self {
+        self.row_update = row_update;
+        self
     }
 
     pub fn remove_row(mut self) -> Self {

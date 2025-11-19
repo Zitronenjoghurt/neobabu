@@ -19,13 +19,17 @@ pub enum BotError {
     ParseInt(#[from] std::num::ParseIntError),
     #[error("Serenity error: {0}")]
     Serenity(#[from] poise::serenity_prelude::Error),
+    #[error("The target of this command cannot be a bot or yourself.")]
+    TargetBotOrYourself,
+    #[error("The target of this command cannot be yourself.")]
+    TargetYourself,
 }
 
 impl BotError {
     pub fn is_user_error(&self) -> bool {
         match self {
             Self::Core(error) => error.is_user_error(),
-            Self::GuildCommandOnly => true,
+            Self::GuildCommandOnly | Self::TargetBotOrYourself | Self::TargetYourself => true,
             Self::ParseInt(_) | Self::Serenity(_) => false,
         }
     }

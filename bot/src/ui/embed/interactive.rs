@@ -18,20 +18,24 @@ pub mod response;
 pub mod rows;
 
 pub struct InteractiveEmbed<'a> {
+    content: Option<String>,
     embed: CreateEmbed,
     rows: Vec<Box<dyn InteractiveRow>>,
     context: &'a Context<'a>,
     timeout: Duration,
+    on_timeout: Option<CreateEmbed>,
     allow_anyone_to_interact: bool,
 }
 
 impl<'a> InteractiveEmbed<'a> {
     pub fn new(context: &'a Context<'a>, embed: CreateEmbed) -> Self {
         Self {
+            content: None,
             embed,
             rows: vec![],
             context,
             timeout: Duration::from_secs(300),
+            on_timeout: None,
             allow_anyone_to_interact: false,
         }
     }
@@ -46,21 +50,30 @@ impl<'a> InteractiveEmbed<'a> {
         self
     }
 
+    pub fn on_timeout(mut self, embed: CreateEmbed) -> Self {
+        self.on_timeout = Some(embed);
+        self
+    }
+
     pub fn allow_anyone_to_interact(mut self, allow: bool) -> Self {
         self.allow_anyone_to_interact = allow;
         self
     }
 
-    pub async fn run(mut self) -> BotResult<()> {
-        let reply_handle = self
-            .context
-            .send(
-                CreateReply::default()
-                    .embed(self.embed.clone())
-                    .components(self.render_rows()),
-            )
-            .await?;
+    pub fn content(mut self, content: impl Into<String>) -> Self {
+        self.content = Some(content.into());
+        self
+    }
 
+    pub async fn run(mut self) -> BotResult<()> {
+        let mut reply = CreateReply::default()
+            .embed(self.embed.clone())
+            .components(self.render_rows());
+        if let Some(message) = &self.content {
+            reply = reply.content(message);
+        }
+
+        let reply_handle = self.context.send(reply).await?;
         let result = self.do_run(&reply_handle).await;
         if let Err(error) = result {
             let error_embed = handle_command_error(error, self.context).await;
@@ -115,11 +128,14 @@ impl<'a> InteractiveEmbed<'a> {
             }
         }
 
-        let timeout_embed = self
-            .embed
-            .clone()
-            .footer(CreateEmbedFooter::new("This interaction has timed out."))
-            .ui_color(UiColor::Gray);
+        let timeout_embed = if let Some(embed) = self.on_timeout.clone() {
+            embed
+        } else {
+            self.embed
+                .clone()
+                .footer(CreateEmbedFooter::new("This interaction has timed out."))
+                .ui_color(UiColor::Gray)
+        };
 
         reply_handle
             .edit(
@@ -175,6 +191,12 @@ impl<'a> InteractiveEmbed<'a> {
         };
 
         let action_rows = self.render_rows();
+        if let Some(content) = response.content {
+            self.content = Some(content);
+        }
+        if response.clear_content {
+            self.content = None;
+        }
         if let Some(embed) = response.embed {
             self.embed = embed;
         }
@@ -184,6 +206,7 @@ impl<'a> InteractiveEmbed<'a> {
                 self.context.serenity_context(),
                 CreateInteractionResponse::UpdateMessage(
                     CreateInteractionResponseMessage::default()
+                        .content(self.content.clone().unwrap_or_default())
                         .embed(self.embed.clone())
                         .components(action_rows),
                 ),

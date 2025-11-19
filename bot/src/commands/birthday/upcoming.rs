@@ -14,6 +14,7 @@ use std::time::Duration;
 
 const PAGE_SIZE: usize = 30;
 
+/// View upcoming birthdays of users which are active on this server.
 #[poise::command(slash_command, guild_only, user_cooldown = "30")]
 pub async fn upcoming(ctx: Context<'_>) -> BotResult<()> {
     let guild = ctx.fetch_guild_model().await?;

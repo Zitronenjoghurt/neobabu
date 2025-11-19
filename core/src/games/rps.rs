@@ -6,6 +6,7 @@ use crate::NeobabuCore;
 
 pub mod choice;
 pub mod state;
+pub mod stats;
 
 pub struct RPSGame {
     pub user_1: user::Model,

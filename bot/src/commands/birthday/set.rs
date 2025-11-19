@@ -24,6 +24,8 @@ pub async fn set(
     #[min = 1900]
     year: Option<i16>,
 ) -> BotResult<()> {
+    ctx.defer_ephemeral().await?;
+
     let mut embed = CreateEmbed::default()
         .warning_user(&ctx.author())
         .title("Do you want to set your birthday?")

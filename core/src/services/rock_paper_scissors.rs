@@ -1,6 +1,7 @@
 use crate::database::entity::{rps_games, rps_user, user};
 use crate::error::CoreResult;
 use crate::games::rps::choice::RPSChoice;
+use crate::games::rps::stats::RPSStats;
 use crate::stores::Stores;
 use sea_orm::{IntoActiveModel, Set};
 use std::sync::Arc;
@@ -75,5 +76,19 @@ impl RockPaperScissorsService {
         }
 
         self.stores.rps_user.update(active).await
+    }
+
+    pub async fn get_stats(&self, user: &user::Model) -> CoreResult<RPSStats> {
+        let user_stats = self.stores.rps_games.get_user_stats(&user.id).await?;
+        let rps_user = self.stores.rps_user.fetch_or_create(user).await?;
+
+        Ok(RPSStats {
+            wins: user_stats.wins as u64,
+            losses: user_stats.losses as u64,
+            draws: user_stats.draws as u64,
+            rock: rps_user.times_rock as u64,
+            paper: rps_user.times_paper as u64,
+            scissors: rps_user.times_scissors as u64,
+        })
     }
 }

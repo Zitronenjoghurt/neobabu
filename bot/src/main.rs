@@ -54,6 +54,7 @@ async fn main() {
         .build();
 
     let intents = GatewayIntents::privileged()
+        | GatewayIntents::GUILDS
         | GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES;
     let client = ClientBuilder::new(&config.credentials.token, intents)

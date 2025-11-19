@@ -16,6 +16,8 @@ pub async fn admin(
     #[channel_types("Text")]
     channel: Option<Channel>,
 ) -> BotResult<()> {
+    ctx.defer_ephemeral().await?;
+
     let guild = ctx.fetch_guild_model().await?;
     let guild_birthday = ctx.stores().guild_birthday.fetch_or_create(&guild).await?;
 

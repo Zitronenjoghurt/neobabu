@@ -17,6 +17,8 @@ const PAGE_SIZE: usize = 30;
 /// View upcoming birthdays of users which are active on this server.
 #[poise::command(slash_command, guild_only, user_cooldown = "30")]
 pub async fn upcoming(ctx: Context<'_>) -> BotResult<()> {
+    ctx.defer().await?;
+
     let guild = ctx.fetch_guild_model().await?;
     let guild_birthday = ctx.stores().guild_birthday.fetch_or_create(&guild).await?;
     if !guild_birthday.enabled {

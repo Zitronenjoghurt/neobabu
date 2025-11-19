@@ -121,11 +121,13 @@ pub enum EmojiType {
     FaceYawning,
     FaceZany,
     FaceZipperMouth,
+    Friends,
     Paper,
     Pvp,
     Rock,
     Scissors,
     Sparkle,
+    Stats,
     Trophy,
 }
 
@@ -251,11 +253,13 @@ impl EmojiType {
             Self::FaceYawning => "face_yawning",
             Self::FaceZany => "face_zany",
             Self::FaceZipperMouth => "face_zipper_mouth",
+            Self::Friends => "friends",
             Self::Paper => "paper",
             Self::Pvp => "pvp",
             Self::Rock => "rock",
             Self::Scissors => "scissors",
             Self::Sparkle => "sparkle",
+            Self::Stats => "stats",
             Self::Trophy => "trophy",
         }
     }

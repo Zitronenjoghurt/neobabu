@@ -7,6 +7,7 @@ use tracing::{error, info};
 
 mod birthday_dm;
 mod birthday_notification;
+mod new_apod;
 
 pub async fn listen(
     ctx: serenity::Context,
@@ -37,6 +38,7 @@ async fn handle_event(
         CoreEvent::BirthdayNotification(event) => {
             birthday_notification::handle(ctx, state, *event).await?
         }
+        CoreEvent::NewApod(apod) => new_apod::handle(ctx, state, *apod).await?,
     }
     Ok(())
 }

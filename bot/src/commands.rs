@@ -5,7 +5,13 @@ use poise::Command;
 mod birthday;
 mod game;
 mod ping;
+mod space;
 
 pub fn get_commands() -> Vec<Command<BotState, BotError>> {
-    vec![ping::ping(), game::game(), birthday::birthday()]
+    vec![
+        ping::ping(),
+        game::game(),
+        birthday::birthday(),
+        space::space(),
+    ]
 }

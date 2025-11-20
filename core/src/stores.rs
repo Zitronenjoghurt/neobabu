@@ -3,7 +3,9 @@ use std::sync::Arc;
 
 pub use sea_orm::{IntoActiveModel, Set};
 
+mod apod;
 mod guild;
+mod guild_apod;
 mod guild_birthday;
 mod rps_games;
 mod rps_user;
@@ -12,7 +14,9 @@ mod user_birthday;
 mod user_guild;
 
 pub struct Stores {
+    pub apod: Arc<apod::ApodStore>,
     pub guild: Arc<guild::GuildStore>,
+    pub guild_apod: Arc<guild_apod::GuildApodStore>,
     pub guild_birthday: Arc<guild_birthday::GuildBirthdayStore>,
     pub rps_games: Arc<rps_games::RPSGamesStore>,
     pub rps_user: Arc<rps_user::RPSUserStore>,
@@ -24,7 +28,9 @@ pub struct Stores {
 impl Stores {
     pub fn initialize(db: &Arc<Database>) -> Arc<Self> {
         Arc::new(Self {
+            apod: apod::ApodStore::initialize(db),
             guild: guild::GuildStore::initialize(db),
+            guild_apod: guild_apod::GuildApodStore::initialize(db),
             guild_birthday: guild_birthday::GuildBirthdayStore::initialize(db),
             rps_games: rps_games::RPSGamesStore::initialize(db),
             rps_user: rps_user::RPSUserStore::initialize(db),

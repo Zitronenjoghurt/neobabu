@@ -4,6 +4,7 @@ use std::sync::Arc;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use tracing::{error, info};
 
+mod apod;
 mod birthday_notification;
 
 pub struct Scheduler {
@@ -30,6 +31,7 @@ impl Scheduler {
 
     async fn schedule(&mut self) -> CoreResult<()> {
         info!("Scheduling jobs...");
+        self.schedule_job("apod", "0 * * * * *", apod::run).await?;
         self.schedule_job(
             "birthday_notification",
             "0 5 9 * * *",

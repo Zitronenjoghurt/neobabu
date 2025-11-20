@@ -1,3 +1,4 @@
+use crate::database::entity::apod;
 use crate::events::birthday_dm::BirthdayDM;
 use crate::events::birthday_notification::BirthdayNotification;
 use std::sync::Arc;
@@ -10,12 +11,14 @@ pub mod birthday_notification;
 pub enum CoreEventType {
     BirthdayDM,
     BirthdayNotification,
+    NewApod,
 }
 
 #[derive(Debug, Clone)]
 pub enum CoreEvent {
     BirthdayDM(Box<BirthdayDM>),
     BirthdayNotification(Box<BirthdayNotification>),
+    NewApod(Box<apod::Model>),
 }
 
 impl CoreEvent {
@@ -23,6 +26,7 @@ impl CoreEvent {
         match self {
             Self::BirthdayDM(_) => CoreEventType::BirthdayDM,
             Self::BirthdayNotification(_) => CoreEventType::BirthdayNotification,
+            Self::NewApod(_) => CoreEventType::NewApod,
         }
     }
 
@@ -35,6 +39,10 @@ impl CoreEvent {
 
     pub fn birthday_notification(notification: BirthdayNotification) -> Self {
         Self::BirthdayNotification(Box::new(notification))
+    }
+
+    pub fn new_apod(apod: apod::Model) -> Self {
+        Self::NewApod(Box::new(apod))
     }
 }
 

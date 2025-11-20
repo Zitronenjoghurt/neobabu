@@ -21,7 +21,7 @@ impl BotState {
         info!("Bot config loaded");
 
         info!("Loading core config...");
-        let core_config = load_core_config()?;
+        let core_config = load_core_config(&config)?;
         info!("Core config loaded");
 
         info!("Initializing core...");
@@ -54,7 +54,10 @@ impl BotState {
     }
 }
 
-fn load_core_config() -> anyhow::Result<Config> {
+fn load_core_config(bot_config: &BotConfig) -> anyhow::Result<Config> {
     let db_url = std::env::var("DATABASE_URL")?;
-    Ok(Config { db_url })
+    Ok(Config {
+        db_url,
+        nasa_api_key: bot_config.credentials.nasa_api.clone(),
+    })
 }

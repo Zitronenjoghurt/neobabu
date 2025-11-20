@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::database::Database;
 use crate::error::CoreResult;
+use crate::integrations::apis::Apis;
 use std::sync::Arc;
 
 pub mod config;
@@ -8,6 +9,7 @@ pub mod database;
 pub mod error;
 pub mod events;
 pub mod games;
+mod integrations;
 pub mod jobs;
 pub mod services;
 pub mod stores;
@@ -16,6 +18,7 @@ mod utils;
 
 #[derive(Clone)]
 pub struct NeobabuCore {
+    pub apis: Arc<Apis>,
     pub config: Arc<Config>,
     pub db: Arc<Database>,
     pub event_bus: Arc<events::CoreEventBus>,
@@ -26,11 +29,13 @@ pub struct NeobabuCore {
 impl NeobabuCore {
     pub async fn initialize(config: Config) -> CoreResult<Self> {
         let config = Arc::new(config);
+        let apis = Apis::initialize(&config);
         let db = Database::initialize(&config).await?;
         let event_bus = events::CoreEventBus::initialize();
         let stores = stores::Stores::initialize(&db);
-        let services = services::Services::initialize(&stores);
+        let services = services::Services::initialize(&apis, &stores);
         Ok(Self {
+            apis,
             config,
             db,
             event_bus,

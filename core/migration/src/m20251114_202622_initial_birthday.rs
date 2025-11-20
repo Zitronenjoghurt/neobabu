@@ -32,8 +32,8 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(GuildBirthday::Table)
                     .col(string(GuildBirthday::GuildId).primary_key())
-                    .col(boolean(GuildBirthday::Enabled).default(true))
-                    .col(string_null(GuildBirthday::NotificationChannelId))
+                    .col(boolean(GuildBirthday::Enabled).default(false))
+                    .col(string_null(GuildBirthday::NotificationChannelId).default(Expr::null()))
                     .col(timestamp(GuildBirthday::CreatedAt).default(Expr::current_timestamp()))
                     .col(timestamp(GuildBirthday::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(

@@ -1,5 +1,6 @@
 [credentials]
 token = ""
+# nasa_api = ""
 
 [emojis]
 arrow_back = 0

@@ -2,7 +2,9 @@
 
 pub mod prelude;
 
+pub mod apod;
 pub mod guild;
+pub mod guild_apod;
 pub mod guild_birthday;
 pub mod rps_games;
 pub mod rps_user;

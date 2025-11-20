@@ -12,8 +12,6 @@ use tracing::{error, info};
 pub async fn run(core: NeobabuCore) -> CoreResult<()> {
     let today = chrono::Utc::now();
 
-    info!("Processing birthdays...");
-
     let mut user_birthdays = core.stores.user_birthday.stream_all().await?;
     let mut count: u32 = 0;
     while let Some(user_birthday) = user_birthdays.next().await {

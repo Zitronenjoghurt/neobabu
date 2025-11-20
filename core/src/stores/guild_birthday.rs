@@ -31,8 +31,6 @@ impl GuildBirthdayStore {
 
         let new_guild_birthday = guild_birthday::ActiveModel {
             guild_id: Set(guild.id.to_string()),
-            enabled: Set(false),
-            notification_channel_id: Set(None),
             ..Default::default()
         };
 

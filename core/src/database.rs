@@ -6,6 +6,7 @@ use std::sync::Arc;
 use tracing::info;
 
 pub mod entity;
+mod entity_ext;
 
 pub struct Database {
     connection: DatabaseConnection,

@@ -16,27 +16,12 @@ services:
     networks:
       - default
 
-  bot:
-    image: neobabu-bot:latest
-    pull_policy: never
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    env_file:
-      - .env
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - default
-
   web:
     image: neobabu-web:latest
     pull_policy: never
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.web
     env_file:
       - .env
     ports:

@@ -1,0 +1,29 @@
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+WORKDIR /web
+
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
+COPY --from=planner /web/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+COPY . .
+RUN cargo build --release --bin neobabu-web
+
+FROM node:20-slim AS vue-builder
+WORKDIR /web/dashboard
+COPY web/dashboard/package*.json ./
+RUN npm ci
+COPY web/dashboard/ ./
+RUN npm run build
+
+FROM debian:bookworm-slim AS runtime
+WORKDIR /web
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /web/target/release/neobabu-web /usr/local/bin/web
+COPY --from=vue-builder /web/dashboard/dist /web/static
+CMD ["/usr/local/bin/web"]

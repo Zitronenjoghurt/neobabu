@@ -13,42 +13,19 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - default
 
-  bot:
+  neobabu:
     image: neobabu-bot:latest
     pull_policy: never
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.bot
     env_file:
       - .env
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - default
-
-  web:
-    image: neobabu-web:latest
-    pull_policy: never
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    env_file:
-      - .env
-    ports:
-      - "127.0.0.1:48573:48573"
-    restart: unless-stopped
-    networks:
-      - default
-      - proxy
 
 volumes:
   neobabu_db_data:
-
-networks:
-  proxy:
-    external: true

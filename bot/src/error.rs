@@ -13,8 +13,12 @@ pub type BotResult<T> = Result<T, BotError>;
 pub enum BotError {
     #[error("{0}")]
     Core(#[from] neobabu_core::error::CoreError),
+    #[error("Error reading environment variable: {0}")]
+    Env(#[from] std::env::VarError),
     #[error("This command can only be used in a guild.")]
     GuildCommandOnly,
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
     #[error("Parse int error: {0}")]
     ParseInt(#[from] std::num::ParseIntError),
     #[error("Serenity error: {0}")]
@@ -23,6 +27,8 @@ pub enum BotError {
     TargetBotOrYourself,
     #[error("The target of this command cannot be yourself.")]
     TargetYourself,
+    #[error("Error deserializing TOML: {0}")]
+    TomlDeserialize(#[from] toml::de::Error),
 }
 
 impl BotError {
@@ -30,7 +36,11 @@ impl BotError {
         match self {
             Self::Core(error) => error.is_user_error(),
             Self::GuildCommandOnly | Self::TargetBotOrYourself | Self::TargetYourself => true,
-            Self::ParseInt(_) | Self::Serenity(_) => false,
+            Self::Env(_)
+            | Self::Io(_)
+            | Self::ParseInt(_)
+            | Self::Serenity(_)
+            | Self::TomlDeserialize(_) => false,
         }
     }
 }

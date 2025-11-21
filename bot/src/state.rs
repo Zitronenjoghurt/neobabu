@@ -1,4 +1,5 @@
 use crate::config::BotConfig;
+use crate::error::BotResult;
 use crate::ui::emoji::EmojiType;
 use neobabu_core::config::Config;
 use neobabu_core::NeobabuCore;
@@ -13,7 +14,7 @@ pub struct BotState {
 }
 
 impl BotState {
-    pub async fn initialize() -> anyhow::Result<Self> {
+    pub async fn initialize() -> BotResult<Self> {
         info!("Initializing bot state...");
 
         info!("Loading bot config...");
@@ -54,7 +55,7 @@ impl BotState {
     }
 }
 
-fn load_core_config(bot_config: &BotConfig) -> anyhow::Result<Config> {
+fn load_core_config(bot_config: &BotConfig) -> BotResult<Config> {
     let db_url = std::env::var("DATABASE_URL")?;
     Ok(Config {
         db_url,

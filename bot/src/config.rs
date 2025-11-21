@@ -1,3 +1,5 @@
+use crate::error::BotResult;
+
 mod credentials;
 mod emoji;
 
@@ -9,7 +11,7 @@ pub struct BotConfig {
 }
 
 impl BotConfig {
-    pub fn load_from_env() -> anyhow::Result<Self> {
+    pub fn load_from_env() -> BotResult<Self> {
         let config_path_string = std::env::var("BOT_CONFIG_PATH")?;
         let config_path = std::path::PathBuf::from(config_path_string);
         let config_str = std::fs::read_to_string(config_path)?;

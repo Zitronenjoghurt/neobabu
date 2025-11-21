@@ -19,4 +19,12 @@ export default defineConfigWithVueTs(
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
   skipFormatting,
+
+  {
+    name: 'app/vue-auto-import',
+    files: ['**/*.vue'],
+    rules: {
+      'vue/no-undef-components': 'off',
+    },
+  },
 )

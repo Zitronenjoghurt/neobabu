@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/neobabu-bot /usr/local/bin/bot
-COPY --from=builder /app/docker/bot-config.toml /neobabu/bot-config.toml
+COPY --from=builder /app/docker/bot-config.toml /bot/bot-config.toml
 CMD ["/usr/local/bin/bot"]
 
 FROM debian:bookworm-slim AS web

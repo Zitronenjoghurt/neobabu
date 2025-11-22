@@ -4,6 +4,7 @@ mod m20251113_223834_initial_core;
 mod m20251114_202622_initial_birthday;
 mod m20251118_211931_initial_games_rps;
 mod m20251120_144534_initial_apod;
+mod m20251122_111720_initial_dashboard;
 
 pub struct Migrator;
 
@@ -15,6 +16,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20251114_202622_initial_birthday::Migration),
             Box::new(m20251118_211931_initial_games_rps::Migration),
             Box::new(m20251120_144534_initial_apod::Migration),
+            Box::new(m20251122_111720_initial_dashboard::Migration),
         ]
     }
 }

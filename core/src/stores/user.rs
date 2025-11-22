@@ -4,6 +4,7 @@ use crate::error::CoreResult;
 use sea_orm::{ActiveModelTrait, EntityTrait, Set};
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct UserStore {
     db: Arc<Database>,
 }
@@ -30,5 +31,9 @@ impl UserStore {
             ..Default::default()
         };
         Ok(new_user.insert(self.db.conn()).await?)
+    }
+
+    pub async fn update(&self, mode: user::ActiveModel) -> CoreResult<user::Model> {
+        Ok(mode.update(self.db.conn()).await?)
     }
 }

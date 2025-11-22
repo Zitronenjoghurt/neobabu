@@ -1,40 +1,50 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
+
+interface User {
+  id: string
+  username?: string
+  avatar_hash?: string
+}
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<{ name: string; email: string } | null>(null)
-  const token = ref<string | null>(null)
+  const user = ref<User | null>(null)
+  const loading = ref(false)
 
-  const isAuthenticated = computed(() => !!user.value)
-  const userName = computed(() => user.value?.name ?? '')
-
-  function login(credentials: { email: string; password: string }) {
-    // TODO
-    user.value = { name: 'John Doe', email: credentials.email }
-    token.value = 'fake-jwt-token'
-    localStorage.setItem('token', token.value)
-  }
-
-  function logout() {
-    user.value = null
-    token.value = null
-    localStorage.removeItem('token')
-  }
-
-  function checkAuth() {
-    const storedToken = localStorage.getItem('token')
-    if (storedToken) {
-      token.value = storedToken
-      user.value = { name: 'John Doe', email: 'john@example.com' }
+  async function fetchUser() {
+    loading.value = true
+    try {
+      const response = await fetch('/api/me', { credentials: 'include' })
+      if (response.ok) {
+        user.value = await response.json()
+      } else {
+        user.value = null
+      }
+    } catch (error) {
+      user.value = null
+    } finally {
+      loading.value = false
     }
+  }
+
+  function login() {
+    window.location.href = '/api/auth/login'
+  }
+
+  async function logout() {
+    await fetch('/api/auth/logout', {
+      credentials: 'include',
+      method: 'GET',
+    })
+    user.value = null
+    window.location.href = '/'
   }
 
   return {
     user,
-    isAuthenticated,
-    userName,
+    loading,
+    fetchUser,
     login,
     logout,
-    checkAuth,
   }
 })

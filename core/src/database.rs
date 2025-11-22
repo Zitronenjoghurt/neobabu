@@ -8,6 +8,7 @@ use tracing::info;
 pub mod entity;
 mod entity_ext;
 
+#[derive(Debug)]
 pub struct Database {
     connection: DatabaseConnection,
 }

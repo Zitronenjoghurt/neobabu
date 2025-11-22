@@ -1,4 +1,5 @@
 use crate::state::ServerState;
+use axum::handler::HandlerWithoutStateExt;
 use axum::Router;
 use std::net::{IpAddr, SocketAddr};
 use tower_http::services::ServeDir;
@@ -6,6 +7,7 @@ use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 mod api;
+mod config;
 mod error;
 mod state;
 
@@ -15,7 +17,7 @@ async fn main() {
     info!("Starting server...");
 
     let state = ServerState::initialize().await.unwrap();
-    let api = api::build();
+    let api = api::build(&state);
 
     let app = Router::new()
         .nest("/api", api)
@@ -26,9 +28,12 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(address).await.unwrap();
 
     info!("Listening on {address}");
-    axum::serve(listener, app.into_make_service())
-        .await
-        .unwrap()
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap()
 }
 
 fn init_tracing() {

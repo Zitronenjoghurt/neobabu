@@ -1,3 +1,4 @@
+use oauth2::url;
 use std::env;
 
 pub type ServerResult<T> = Result<T, ServerError>;
@@ -8,4 +9,6 @@ pub enum ServerError {
     Core(#[from] neobabu_core::error::CoreError),
     #[error("Env error: {0}")]
     Env(#[from] env::VarError),
+    #[error("Url parse error: {0}")]
+    UrlParse(#[from] url::ParseError),
 }

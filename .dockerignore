@@ -1,5 +1,5 @@
 debug
 target
 .idea/
-assets
+/assets/
 web/dashboard/node_modules

@@ -12,6 +12,9 @@ impl MigrationTrait for Migration {
                     .table(User::Table)
                     .if_not_exists()
                     .col(string(User::Id).primary_key())
+                    .col(string_null(User::Username).default(Expr::null()))
+                    .col(string_null(User::AvatarHash).default(Expr::null()))
+                    .col(string_null(User::EncryptedOauthToken).default(Expr::null()))
                     .col(timestamp(User::CreatedAt).default(Expr::current_timestamp()))
                     .col(timestamp(User::UpdatedAt).default(Expr::current_timestamp()))
                     .to_owned(),
@@ -84,6 +87,9 @@ impl MigrationTrait for Migration {
 enum User {
     Table,
     Id,
+    Username,
+    AvatarHash,
+    EncryptedOauthToken,
     CreatedAt,
     UpdatedAt,
 }

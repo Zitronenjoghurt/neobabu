@@ -7,6 +7,9 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
+    pub username: Option<String>,
+    pub avatar_hash: Option<String>,
+    pub encrypted_oauth_token: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

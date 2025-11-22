@@ -5,6 +5,7 @@ use crate::integrations::apis::Apis;
 use std::sync::Arc;
 
 pub mod config;
+pub mod cryptor;
 pub mod database;
 pub mod error;
 pub mod events;

@@ -21,6 +21,8 @@ pub enum BotError {
     Io(#[from] std::io::Error),
     #[error("Parse int error: {0}")]
     ParseInt(#[from] std::num::ParseIntError),
+    #[error("Reqwest error: {0}")]
+    Reqwest(#[from] reqwest::Error),
     #[error("Serenity error: {0}")]
     Serenity(#[from] poise::serenity_prelude::Error),
     #[error("The target of this command cannot be a bot or yourself.")]
@@ -38,6 +40,7 @@ impl BotError {
             Self::GuildCommandOnly | Self::TargetBotOrYourself | Self::TargetYourself => true,
             Self::Env(_)
             | Self::Io(_)
+            | Self::Reqwest(_)
             | Self::ParseInt(_)
             | Self::Serenity(_)
             | Self::TomlDeserialize(_) => false,

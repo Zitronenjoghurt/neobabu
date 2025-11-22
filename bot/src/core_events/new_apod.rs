@@ -4,11 +4,16 @@ use crate::ui::color::UiColor;
 use crate::ui::embed::CreateEmbedExt;
 use neobabu_core::database::entity::apod;
 use poise::futures_util::StreamExt;
-use poise::serenity_prelude::{ChannelId, Context, CreateEmbed, CreateEmbedAuthor, CreateMessage};
+use poise::serenity_prelude::{
+    ChannelId, Context, CreateAttachment, CreateEmbed, CreateEmbedAuthor, CreateMessage,
+};
 use std::ops::Add;
+use tracing::info;
 
 pub async fn handle(ctx: &Context, state: &BotState, apod: apod::Model) -> BotResult<()> {
-    let embed = build_embed(apod);
+    let attachment = download_image(&apod).await?;
+    let embed = build_embed(apod, &attachment);
+
     let mut guild_apods = state.core.stores.guild_apod.stream_all_enabled().await?;
     while let Some(guild_apod) = guild_apods.next().await {
         let guild_apod = guild_apod?;
@@ -27,21 +32,54 @@ pub async fn handle(ctx: &Context, state: &BotState, apod: apod::Model) -> BotRe
             "".to_string()
         };
 
-        let _ = channel_id
-            .send_message(
-                ctx,
-                CreateMessage::new()
-                    .content(format!(
-                        "**{role}NASA has just posted a new Astronomy Picture of the Day!**"
-                    ))
-                    .embed(embed.clone()),
-            )
-            .await;
+        let mut message = CreateMessage::new()
+            .content(format!(
+                "**{role}NASA has just posted a new Astronomy Picture of the Day!**"
+            ))
+            .embed(embed.clone());
+
+        if let Some(attachment) = &attachment {
+            message = message.add_file(attachment.clone());
+        }
+
+        let _ = channel_id.send_message(ctx, message).await;
     }
     Ok(())
 }
 
-fn build_embed(apod: apod::Model) -> CreateEmbed {
+async fn download_image(apod: &apod::Model) -> BotResult<Option<CreateAttachment>> {
+    if let Some(media_type) = apod.media_type.as_ref() {
+        if media_type != "image" {
+            return Ok(None);
+        }
+    } else {
+        return Ok(None);
+    }
+
+    let Some(image_url) = apod
+        .hd_url
+        .as_ref()
+        .or(apod.url.as_ref())
+        .or(apod.thumbnail_url.as_ref())
+    else {
+        return Ok(None);
+    };
+
+    info!("Downloading APOD image from: {}", image_url);
+    let response = reqwest::get(image_url).await?;
+    let bytes = response.bytes().await?;
+    let filename = image_url
+        .rsplit('/')
+        .next()
+        .and_then(|s| s.split('?').next())
+        .unwrap_or("apod.png")
+        .to_string();
+    info!(filename = %filename, "Downloaded APOD image");
+
+    Ok(Some(CreateAttachment::bytes(bytes.to_vec(), filename)))
+}
+
+fn build_embed(apod: apod::Model, attachment: &Option<CreateAttachment>) -> CreateEmbed {
     let site_url = apod.site_url();
 
     let title = apod
@@ -55,13 +93,6 @@ fn build_embed(apod: apod::Model) -> CreateEmbed {
         .add(&format!(
             "\n\n[View this entry on the official APOD website]({site_url})"
         ));
-    let image_url = if let Some(thumbnail) = apod.thumbnail_url.clone() {
-        Some(thumbnail)
-    } else if let Some(hd_url) = apod.hd_url.clone() {
-        Some(hd_url)
-    } else {
-        apod.url.clone()
-    };
 
     let copyright = if let Some(copyright) = apod.copyright.clone() {
         format!(" | Copyright: {}", copyright.trim_matches('\n'))
@@ -82,8 +113,8 @@ fn build_embed(apod: apod::Model) -> CreateEmbed {
         )
         .footer_text(footer);
 
-    if let Some(image_url) = image_url {
-        embed = embed.image(image_url);
+    if let Some(attachment) = attachment {
+        embed = embed.image(format!("attachment://{}", attachment.filename));
     }
 
     embed

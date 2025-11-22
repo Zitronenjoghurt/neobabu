@@ -16,4 +16,11 @@ impl apod::Model {
     pub fn date_time(&self) -> Option<NaiveDate> {
         NaiveDate::parse_from_str(&self.date_string(), "%Y-%m-%d").ok()
     }
+
+    pub fn image_url(&self) -> Option<String> {
+        self.hd_url
+            .clone()
+            .or(self.url.clone())
+            .or(self.thumbnail_url.clone())
+    }
 }

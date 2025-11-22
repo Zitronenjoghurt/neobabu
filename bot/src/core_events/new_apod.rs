@@ -8,11 +8,18 @@ use poise::serenity_prelude::{
     ChannelId, Context, CreateAttachment, CreateEmbed, CreateEmbedAuthor, CreateMessage,
 };
 use std::ops::Add;
-use tracing::info;
+use tracing::{info, warn};
 
 pub async fn handle(ctx: &Context, state: &BotState, apod: apod::Model) -> BotResult<()> {
     let attachment = download_image(&apod).await?;
-    let embed = build_embed(apod, &attachment);
+    let image_url = apod.image_url();
+
+    let mut embed = build_embed(apod, &attachment);
+    if attachment.is_none()
+        && let Some(image_url) = image_url
+    {
+        embed = embed.image(image_url);
+    };
 
     let mut guild_apods = state.core.stores.guild_apod.stream_all_enabled().await?;
     while let Some(guild_apod) = guild_apods.next().await {
@@ -56,18 +63,35 @@ async fn download_image(apod: &apod::Model) -> BotResult<Option<CreateAttachment
         return Ok(None);
     }
 
-    let Some(image_url) = apod
-        .hd_url
-        .as_ref()
-        .or(apod.url.as_ref())
-        .or(apod.thumbnail_url.as_ref())
-    else {
+    let Some(image_url) = apod.image_url() else {
         return Ok(None);
     };
 
     info!("Downloading APOD image from: {}", image_url);
-    let response = reqwest::get(image_url).await?;
+
+    let response = reqwest::get(&image_url).await?;
+
+    if let Err(err) = response.error_for_status_ref() {
+        warn!(error = %err, "Failed to download image from: {}", image_url);
+        return Ok(None);
+    }
+
     let bytes = response.bytes().await?;
+
+    if bytes.is_empty() {
+        warn!("Downloaded empty image from: {}", image_url);
+        return Ok(None);
+    }
+
+    if bytes.len() > 8_388_608 {
+        warn!(
+            "Downloaded image from: {} is too large ({} bytes) to upload",
+            image_url,
+            bytes.len()
+        );
+        return Ok(None);
+    }
+
     let filename = image_url
         .rsplit('/')
         .next()

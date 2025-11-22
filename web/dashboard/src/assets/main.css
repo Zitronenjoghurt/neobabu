@@ -1,1 +1,14 @@
 @import "base.css";
+
+.p-menubar-item-link,
+.p-menubar-item-label {
+    color: var(--p-primary-color) !important;
+}
+
+.p-menubar-item-icon {
+    color: var(--p-primary-500) !important;
+}
+
+.p-menubar {
+    border-color: var(--p-primary-800) !important;
+}

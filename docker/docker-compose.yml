@@ -22,6 +22,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      target: bot
     env_file:
       - .env
     restart: unless-stopped
@@ -37,6 +38,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      target: web
     env_file:
       - .env
     ports:

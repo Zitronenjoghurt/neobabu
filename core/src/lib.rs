@@ -10,7 +10,7 @@ pub mod database;
 pub mod error;
 pub mod events;
 pub mod games;
-mod integrations;
+pub mod integrations;
 pub mod jobs;
 pub mod services;
 pub mod stores;

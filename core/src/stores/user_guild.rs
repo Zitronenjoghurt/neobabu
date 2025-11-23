@@ -52,4 +52,15 @@ impl UserGuildStore {
             .stream(self.db.conn())
             .await?)
     }
+
+    pub async fn with_guild_ids(
+        &self,
+        ids: impl IntoIterator<Item = impl AsRef<str>>,
+    ) -> CoreResult<Vec<user_guild::Model>> {
+        let ids: Vec<String> = ids.into_iter().map(|id| id.as_ref().to_string()).collect();
+        Ok(user_guild::Entity::find()
+            .filter(user_guild::Column::GuildId.is_in(ids))
+            .all(self.db.conn())
+            .await?)
+    }
 }

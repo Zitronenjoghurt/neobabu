@@ -1,11 +1,11 @@
 use crate::api::error::{ApiError, ApiResult};
-use crate::api::models::discord::user::DiscordUser;
 use crate::api::models::query::auth_request::AuthRequest;
 use crate::state::ServerState;
 use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Redirect};
 use axum::routing::get;
 use axum::Router;
+use neobabu_core::integrations::apis::discord::DiscordClient;
 use neobabu_core::stores::{IntoActiveModel, Set};
 use oauth2::{AuthorizationCode, PkceCodeVerifier, TokenResponse};
 use tower_sessions::Session;
@@ -39,27 +39,23 @@ async fn get_callback(
         .await
         .map_err(|_| ApiError::OauthTokenExchangeFailed)?;
 
-    let discord_user = client
-        .get("https://discord.com/api/users/@me")
-        .bearer_auth(token_response.access_token().secret())
-        .send()
-        .await?
-        .json::<DiscordUser>()
+    let discord_user = DiscordClient::with_user_token(token_response.access_token().secret())
+        .me()
         .await?;
 
     let mut user = state
         .core
         .stores
         .user
-        .fetch_or_create(&discord_user.id)
+        .fetch_or_create(discord_user.id.to_string())
         .await?
         .into_active_model();
     let oauth_token = state
         .oauth_cryptor
         .encrypt(&token_response.access_token().secret())?;
     user.encrypted_oauth_token = Set(Some(oauth_token));
-    user.username = Set(Some(discord_user.username));
-    user.avatar_hash = Set(discord_user.avatar_hash);
+    user.username = Set(Some(discord_user.name.to_string()));
+    user.avatar_hash = Set(discord_user.avatar.map(|avatar| avatar.to_string()));
     state.core.stores.user.update(user).await?;
 
     session.remove::<String>("oauth_csrf").await?;

@@ -36,6 +36,10 @@ pub enum CoreError {
     Reqwest(#[from] reqwest::Error),
     #[error("Reqwest middleware error: {0}")]
     ReqwestMiddleware(#[from] reqwest_middleware::Error),
+    #[error("Serenity error: {0}")]
+    Serenity(#[from] serenity::Error),
+    #[error("Unauthorized")]
+    Unauthorized,
     #[error("Failed to parse URL: {0}")]
     UrlParse(#[from] url::ParseError),
     #[error("UTF-8 error: {0}")]
@@ -45,7 +49,10 @@ pub enum CoreError {
 impl CoreError {
     pub fn is_user_error(&self) -> bool {
         match self {
-            Self::BirthdayTimeout | Self::FeatureNotEnabled(_) | Self::InvalidBirthday(_) => true,
+            Self::BirthdayTimeout
+            | Self::FeatureNotEnabled(_)
+            | Self::InvalidBirthday(_)
+            | Self::Unauthorized => true,
             Self::Aed(_)
             | Self::Base64Decode(_)
             | Self::CronScheduler(_)
@@ -59,6 +66,7 @@ impl CoreError {
             | Self::Os(_)
             | Self::Reqwest(_)
             | Self::ReqwestMiddleware(_)
+            | Self::Serenity(_)
             | Self::UrlParse(_)
             | Self::Utf8(_) => false,
         }

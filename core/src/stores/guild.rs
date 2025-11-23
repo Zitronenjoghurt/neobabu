@@ -1,7 +1,7 @@
 use crate::database::entity::guild;
 use crate::database::Database;
 use crate::error::CoreResult;
-use sea_orm::{ActiveModelTrait, EntityTrait, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use std::sync::Arc;
 
 pub struct GuildStore {
@@ -30,5 +30,16 @@ impl GuildStore {
             ..Default::default()
         };
         Ok(new.insert(self.db.conn()).await?)
+    }
+
+    pub async fn with_ids(
+        &self,
+        ids: impl IntoIterator<Item = impl AsRef<str>>,
+    ) -> CoreResult<Vec<guild::Model>> {
+        let ids: Vec<String> = ids.into_iter().map(|id| id.as_ref().to_string()).collect();
+        Ok(guild::Entity::find()
+            .filter(guild::Column::Id.is_in(ids))
+            .all(self.db.conn())
+            .await?)
     }
 }

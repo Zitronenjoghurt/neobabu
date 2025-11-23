@@ -1,4 +1,4 @@
-.PHONY: up down build logs db-up db-down bot-up bot-down bot-build bot-logs web-up web-down web-build web-logs web-dev migration entity
+.PHONY: up down build logs db-up db-down bot-up bot-down bot-build bot-logs web-up web-down web-build web-logs web-dev dev-up dev-down migration entity
 
 up:
 	docker compose -f docker/docker-compose.yml up -d
@@ -50,6 +50,12 @@ web-logs:
 
 web-dev:
 	cd web/dashboard && npm run dev
+
+dev-up:
+	docker compose -f docker/docker-compose.dev.yml up -d
+
+dev-down:
+	docker compose -f docker/docker-compose.dev.yml down
 
 entity:
 	sea-orm-cli generate entity -o ./core/src/database/entity --database-url postgresql://admin:root@localhost:54323/neobabu

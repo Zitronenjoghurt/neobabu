@@ -1,6 +1,7 @@
 use crate::config::Config;
 use std::sync::Arc;
 
+pub mod discord;
 pub mod nasa_apod;
 
 pub struct Apis {

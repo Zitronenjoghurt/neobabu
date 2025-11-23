@@ -4,12 +4,14 @@ use crate::state::ServerState;
 use axum::Router;
 
 mod auth;
+mod guilds;
 mod me;
 
 pub fn build_routes(state: &ServerState) -> Router<ServerState> {
     Router::new()
         .nest("/auth", auth::router())
         .nest("/me", me::router())
+        .nest("/guilds", guilds::router())
         .layer(build_session_layer(state))
         .layer(build_rate_limit_layer())
 }

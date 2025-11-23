@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 interface User {
   id: string
@@ -40,9 +40,12 @@ export const useAuthStore = defineStore('auth', () => {
     window.location.href = '/'
   }
 
+  const isAuthenticated = computed(() => user.value !== null)
+
   return {
     user,
     loading,
+    isAuthenticated,
     fetchUser,
     login,
     logout,

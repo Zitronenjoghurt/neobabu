@@ -1,9 +1,8 @@
 use crate::state::ServerState;
-use axum::handler::HandlerWithoutStateExt;
 use axum::Router;
 use std::net::{IpAddr, SocketAddr};
-use tower_http::services::ServeDir;
-use tracing::info;
+use tower_http::services::{ServeDir, ServeFile};
+use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
 mod api;
@@ -19,10 +18,23 @@ async fn main() {
     let state = ServerState::initialize().await.unwrap();
     let api = api::build(&state);
 
-    let app = Router::new()
-        .nest("/api", api)
-        .fallback_service(ServeDir::new("./static"))
-        .with_state(state);
+    let vite_dev_server = std::env::var("VITE_DEV_SERVER").ok();
+
+    let app = if let Some(dev_server) = vite_dev_server {
+        info!("Running in DEV mode, proxying to Vite at {}", dev_server);
+        Router::new()
+            .nest("/api", api)
+            .fallback(proxy_to_vite)
+            .with_state(state)
+    } else {
+        info!("Running in PROD mode, serving static files");
+        Router::new()
+            .nest("/api", api)
+            .fallback_service(
+                ServeDir::new("./static").not_found_service(ServeFile::new("./static/index.html")),
+            )
+            .with_state(state)
+    };
 
     let address = SocketAddr::new(IpAddr::from([0, 0, 0, 0]), 48573);
     let listener = tokio::net::TcpListener::bind(address).await.unwrap();
@@ -43,4 +55,51 @@ fn init_tracing() {
         )
         .init();
     info!("Tracing initialized");
+}
+
+async fn proxy_to_vite(
+    axum::extract::State(state): axum::extract::State<ServerState>,
+    req: axum::extract::Request,
+) -> axum::response::Response {
+    let vite_url = std::env::var("VITE_DEV_SERVER").unwrap();
+
+    let client = reqwest::Client::new();
+    let path = req.uri().path();
+    let query = req
+        .uri()
+        .query()
+        .map(|q| format!("?{}", q))
+        .unwrap_or_default();
+
+    match client
+        .get(format!("{}{}{}", vite_url, path, query))
+        .send()
+        .await
+    {
+        Ok(response) => {
+            let mut builder = axum::response::Response::builder().status(response.status());
+
+            for (key, value) in response.headers() {
+                builder = builder.header(key, value);
+            }
+
+            match response.bytes().await {
+                Ok(bytes) => builder.body(axum::body::Body::from(bytes)).unwrap(),
+                Err(err) => {
+                    error!("{err}");
+                    axum::response::Response::builder()
+                        .status(500)
+                        .body(axum::body::Body::empty())
+                        .unwrap()
+                }
+            }
+        }
+        Err(err) => {
+            error!("{err}");
+            axum::response::Response::builder()
+                .status(502)
+                .body(axum::body::Body::empty())
+                .unwrap()
+        }
+    }
 }

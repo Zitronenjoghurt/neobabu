@@ -16,10 +16,10 @@ const iconUrl = computed(() => {
 
 <template>
   <div
-    :class="selected ? 'surface-100' : 'surface-card shadow-5 hover:surface-50'"
-    class="border-round p-2 transition-colors"
+    :class="selected ? 'surface-100 selected-scale' : 'surface-card shadow-5 hover:surface-50'"
+    class="border-round p-2 transition-all transition-duration-200"
   >
-    <div v-if="guild" class="flex align-items-center gap-3">
+    <div v-if="guild" class="flex align-items-center gap-3 select-none">
       <Avatar v-if="guild.icon_hash" :image="iconUrl" shape="circle" size="small" />
       <Avatar
         v-else
@@ -30,7 +30,7 @@ const iconUrl = computed(() => {
       />
 
       <span
-        class="text-m font-semibold select-none white-space-nowrap overflow-hidden text-overflow-ellipsis flex-1"
+        class="text-m font-semibold white-space-nowrap overflow-hidden text-overflow-ellipsis flex-1"
         >{{ guild.name }}</span
       >
     </div>
@@ -41,3 +41,9 @@ const iconUrl = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.selected-scale {
+  transform: scale(1.02);
+}
+</style>

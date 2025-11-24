@@ -16,3 +16,16 @@
 .surface-border {
     border-color: var(--p-primary-800) !important;
 }
+
+.p-tieredmenu {
+    border-color: var(--p-primary-800) !important;
+}
+
+.p-menubar-button {
+    color: var(--p-primary-500) !important;
+}
+
+.p-menubar-root-list,
+.p-menubar-mobile-active .p-menubar-root-list {
+    border-color: var(--p-primary-800) !important;
+}

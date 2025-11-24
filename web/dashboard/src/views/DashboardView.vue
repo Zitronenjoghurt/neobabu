@@ -6,7 +6,9 @@
       <GuildList />
     </aside>
 
-    <section class="flex-1 p-4 overflow-y-auto">
+    <section
+      class="flex-1 p-4 overflow-y-auto surface-card surface-border border-1 border-round-right"
+    >
       <div class="text-color-secondary">Select a guild to get started</div>
     </section>
   </main>

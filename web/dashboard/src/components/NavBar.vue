@@ -17,9 +17,12 @@ const items = computed(() => {
 
 <template>
   <div class="mb-4">
-    <Menubar :model="items" class="sticky">
+    <Menubar :model="items" class="sticky navbar-wrapper">
       <template #start>
-        <span class="font-bold text-xl text-primary">NeoBabu</span>
+        <div class="flex align-items-center gap-2 mr-2">
+          <Avatar image="/neobabu.png" shape="circle" size="large" />
+          <span class="font-bold text-xl text-primary">NeoBabu</span>
+        </div>
       </template>
       <template #item="{ item, props }">
         <router-link v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
@@ -39,3 +42,10 @@ const items = computed(() => {
     </Menubar>
   </div>
 </template>
+
+<style scoped>
+.navbar-wrapper {
+  position: relative;
+  z-index: 1000;
+}
+</style>

@@ -2,7 +2,7 @@
 
 <template>
   <main class="flex h-full">
-    <aside class="w-2 surface-ground border-right-1 surface-border flex flex-column">
+    <aside class="w-2 flex flex-column">
       <GuildList />
     </aside>
 

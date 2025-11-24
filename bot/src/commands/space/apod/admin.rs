@@ -7,7 +7,7 @@ use crate::Context;
 use neobabu_core::stores::{IntoActiveModel, Set};
 use poise::serenity_prelude::{Channel, CreateEmbed, Role};
 
-#[poise::command(slash_command, guild_only, required_permissions = "ADMINISTRATOR")]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_GUILD")]
 pub async fn admin(
     ctx: Context<'_>,
     #[description = "Whether to enable or disable apod notifications."] enable: Option<bool>,

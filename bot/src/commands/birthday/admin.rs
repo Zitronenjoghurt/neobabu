@@ -8,7 +8,7 @@ use neobabu_core::stores::{IntoActiveModel, Set};
 use poise::serenity_prelude::{Channel, CreateEmbed};
 
 /// Customize server-wide birthday settings.
-#[poise::command(slash_command, guild_only, required_permissions = "ADMINISTRATOR")]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_GUILD")]
 pub async fn admin(
     ctx: Context<'_>,
     #[description = "Whether to enable or disable birthday notifications."] enable: Option<bool>,

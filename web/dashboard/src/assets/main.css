@@ -12,3 +12,7 @@
 .p-menubar {
     border-color: var(--p-primary-800) !important;
 }
+
+.surface-border {
+    border-color: var(--p-primary-800) !important;
+}

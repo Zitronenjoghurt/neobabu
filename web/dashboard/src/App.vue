@@ -8,8 +8,8 @@ onMounted(() => authStore.fetchUser())
 </script>
 
 <template>
-  <main class="p-2">
+  <div class="flex flex-column h-screen p-3">
     <NavBar />
-    <RouterView />
-  </main>
+    <RouterView class="flex-1 overflow-hidden" />
+  </div>
 </template>

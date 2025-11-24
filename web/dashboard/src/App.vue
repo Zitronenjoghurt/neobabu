@@ -12,7 +12,7 @@ onMounted(() => authStore.fetchUser())
     <NavBar />
     <RouterView v-slot="{ Component }">
       <Transition mode="out-in" name="fade">
-        <component :is="Component" class="flex-1 overflow-hidden" />
+        <component :is="Component" class="flex-1" />
       </Transition>
     </RouterView>
   </div>

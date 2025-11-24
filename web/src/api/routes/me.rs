@@ -5,6 +5,8 @@ use crate::state::ServerState;
 use axum::routing::get;
 use axum::Router;
 
+mod settings;
+
 async fn get_me(user: AuthUser) -> ApiResult<MeResponse> {
     let user = user.into_model();
     Ok(MeResponse {
@@ -15,5 +17,7 @@ async fn get_me(user: AuthUser) -> ApiResult<MeResponse> {
 }
 
 pub fn router() -> Router<ServerState> {
-    Router::<ServerState>::new().route("/", get(get_me))
+    Router::<ServerState>::new()
+        .route("/", get(get_me))
+        .nest("/settings", settings::router())
 }

@@ -16,7 +16,7 @@ const items = computed(() => {
 </script>
 
 <template>
-  <div class="mb-4">
+  <div class="mb-3">
     <Menubar :model="items" class="sticky navbar-wrapper">
       <template #start>
         <div class="flex align-items-center gap-2 mr-2">

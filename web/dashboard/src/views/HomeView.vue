@@ -1,7 +1,7 @@
 <script lang="ts" setup></script>
 
 <template>
-  <div class="landing-page flex align-items-center justify-content-center">
+  <div class="landing-page flex align-items-center justify-content-center select-none">
     <div class="floating-icons">
       <i class="pi pi-discord floating-icon" style="top: 10%; left: 10%"></i>
       <i class="pi pi-star floating-icon" style="top: 20%; right: 15%"></i>
@@ -11,7 +11,7 @@
 
     <div class="content-wrapper text-center">
       <div class="mb-6">
-        <div class="icon-wrapper mb-4">
+        <div class="mb-4">
           <i class="pi pi-wrench text-6xl text-primary rotating-icon"></i>
         </div>
         <h1 class="text-5xl md:text-6xl font-bold mb-3 fade-in-up">Under Construction</h1>
@@ -59,7 +59,8 @@
 <style scoped>
 .landing-page {
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .floating-icons {
@@ -85,10 +86,6 @@
   50% {
     transform: translateY(-20px) rotate(5deg);
   }
-}
-
-.icon-wrapper {
-  display: inline-block;
 }
 
 .rotating-icon {

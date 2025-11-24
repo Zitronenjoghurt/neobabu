@@ -7,7 +7,7 @@ export interface Guild {
   icon_hash?: string
   has_bot: boolean
   is_active: boolean
-  can_add_bot: boolean
+  can_manage: boolean
 }
 
 export const useGuildStore = defineStore('guilds', () => {
@@ -27,8 +27,8 @@ export const useGuildStore = defineStore('guilds', () => {
     if (!guilds.value) return null
 
     return [...guilds.value].sort((a, b) => {
-      const aScore = [a.has_bot, a.is_active, a.can_add_bot].filter(Boolean).length
-      const bScore = [b.has_bot, b.is_active, b.can_add_bot].filter(Boolean).length
+      const aScore = [a.has_bot, a.is_active, a.can_manage].filter(Boolean).length
+      const bScore = [b.has_bot, b.is_active, b.can_manage].filter(Boolean).length
 
       if (bScore !== aScore) {
         return bScore - aScore

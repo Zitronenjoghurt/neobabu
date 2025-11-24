@@ -29,3 +29,31 @@
 .p-menubar-mobile-active .p-menubar-root-list {
     border-color: var(--p-primary-800) !important;
 }
+
+.p-select {
+    border-color: var(--p-primary-800) !important;
+}
+
+.p-select-label {
+    color: var(--p-primary-color) !important;
+}
+
+.p-select-dropdown-icon {
+    color: var(--p-primary-500) !important;
+}
+
+.p-select-overlay {
+    border-color: var(--p-primary-800) !important;
+}
+
+.p-select-option {
+    color: var(--p-primary-color) !important;
+}
+
+.p-select-option:hover {
+    background-color: var(--p-primary-900) !important;
+}
+
+.p-select-option-label {
+    color: var(--p-primary-color) !important;
+}

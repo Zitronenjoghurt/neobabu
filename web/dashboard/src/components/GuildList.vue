@@ -9,7 +9,7 @@ onMounted(() => guildStore.ensureGuilds())
 
 <template>
   <div
-    class="guild-list-wrapper flex-1 overflow-y-auto p-2 surface-card surface-border border-1 border-round"
+    class="guild-list-wrapper flex-1 overflow-y-auto p-2 surface-card surface-border border-1 border-round-left"
   >
     <template v-if="guildStore.loading">
       <GuildListItem v-for="i in 20" :key="i" :guild="null" class="mb-2 cursor-pointer" />

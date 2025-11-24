@@ -4,6 +4,8 @@ use crate::error::{CoreError, CoreResult};
 use crate::integrations::apis::discord::DiscordClient;
 use crate::stores::Stores;
 use crate::types::user_guild_info::UserGuildInfo;
+use crate::types::user_settings::birthday::UserBirthdaySettings;
+use crate::types::user_settings::UserSettings;
 use serenity::model::Permissions;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -55,9 +57,9 @@ impl UserService {
             let guild_id = guild.id.to_string();
             let has_bot = bot_guilds.contains_key(&guild_id);
             let is_active = user_guilds.contains_key(&guild_id);
-            let can_add_bot = guild.permissions.contains(Permissions::MANAGE_GUILD);
+            let can_manage = guild.permissions.contains(Permissions::MANAGE_GUILD);
 
-            if !has_bot && !is_active && !can_add_bot {
+            if !has_bot && !is_active && !can_manage {
                 continue;
             }
 
@@ -67,12 +69,23 @@ impl UserService {
                 icon_hash: guild.icon.map(|icon| icon.to_string()),
                 has_bot,
                 is_active,
-                can_add_bot,
+                can_manage,
             };
 
             infos.push(info);
         }
 
         Ok(infos)
+    }
+
+    pub async fn get_settings(&self, user: &user::Model) -> CoreResult<UserSettings> {
+        let user_birthday = self.stores.user_birthday.find_by_user_id(&user.id).await?;
+        let birthday = user_birthday.map(|ub| UserBirthdaySettings {
+            day: ub.day,
+            month: ub.month,
+            year: ub.year,
+            updated_at: ub.updated_at.and_utc().timestamp(),
+        });
+        Ok(UserSettings { birthday })
     }
 }

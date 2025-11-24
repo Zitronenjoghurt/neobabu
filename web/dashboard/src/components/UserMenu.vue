@@ -16,7 +16,7 @@ const userMenuItems = [
     label: 'Settings',
     icon: 'pi pi-cog',
     class: 'p-ripple',
-    command: () => router.push('/'),
+    command: () => router.push('/settings'),
   },
   {
     separator: true,

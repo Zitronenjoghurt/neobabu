@@ -7,5 +7,5 @@ pub struct UserGuildInfo {
     pub icon_hash: Option<String>,
     pub has_bot: bool,
     pub is_active: bool,
-    pub can_add_bot: bool,
+    pub can_manage: bool,
 }

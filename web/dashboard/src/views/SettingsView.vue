@@ -1,10 +1,13 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import BirthdaySettings from '@/components/settings/BirthdaySettings.vue'
+import { useSettingsStore } from '@/stores/settings.ts'
 
+const settingsStore = useSettingsStore()
 const settingsCategories = ref([{ label: 'Birthday', value: 'birthday', icon: 'pi-gift' }])
-
 const selectedCategory = ref('user')
+
+onMounted(() => settingsStore.fetchSettings())
 </script>
 
 <template>

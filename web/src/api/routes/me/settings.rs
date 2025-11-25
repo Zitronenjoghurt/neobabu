@@ -11,7 +11,13 @@ async fn get_settings(
     State(state): State<ServerState>,
 ) -> ApiResult<UserSettingsResponse> {
     let user = user.into_model();
-    Ok(state.core.services.user.get_settings(&user).await?.into())
+    Ok(state
+        .core
+        .services
+        .user
+        .get_settings(&state.core.services.birthday, &user)
+        .await?
+        .into())
 }
 
 pub fn router() -> Router<ServerState> {

@@ -2,6 +2,7 @@ use crate::cryptor::Cryptor;
 use crate::database::entity::user;
 use crate::error::{CoreError, CoreResult};
 use crate::integrations::apis::discord::DiscordClient;
+use crate::services::birthday::BirthdayService;
 use crate::stores::Stores;
 use crate::types::user_guild_info::UserGuildInfo;
 use crate::types::user_settings::birthday::UserBirthdaySettings;
@@ -78,13 +79,17 @@ impl UserService {
         Ok(infos)
     }
 
-    pub async fn get_settings(&self, user: &user::Model) -> CoreResult<UserSettings> {
+    pub async fn get_settings(
+        &self,
+        birthday_service: &Arc<BirthdayService>,
+        user: &user::Model,
+    ) -> CoreResult<UserSettings> {
         let user_birthday = self.stores.user_birthday.find_by_user_id(&user.id).await?;
         let birthday = user_birthday.map(|ub| UserBirthdaySettings {
             day: ub.day,
             month: ub.month,
             year: ub.year,
-            updated_at: ub.updated_at.and_utc().timestamp(),
+            updatable: birthday_service.can_update(&ub),
         });
         Ok(UserSettings { birthday })
     }

@@ -18,9 +18,7 @@ async fn main() {
     let state = ServerState::initialize().await.unwrap();
     let api = api::build(&state);
 
-    let vite_dev_server = std::env::var("VITE_DEV_SERVER").ok();
-
-    let app = if let Some(dev_server) = vite_dev_server {
+    let app = if let Some(dev_server) = &state.config.vite_dev_server {
         info!("Running in DEV mode, proxying to Vite at {}", dev_server);
         Router::new()
             .nest("/api", api)

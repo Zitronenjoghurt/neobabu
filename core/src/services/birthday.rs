@@ -38,6 +38,20 @@ impl BirthdayService {
         Ok(())
     }
 
+    pub fn can_update(&self, model: &user_birthday::Model) -> bool {
+        let now = chrono::Utc::now();
+        if model
+            .updated_at
+            .and_utc()
+            .add(Duration::hours(BIRTHDAY_UPDATE_TIMEOUT_HOURS))
+            > now
+        {
+            false
+        } else {
+            true
+        }
+    }
+
     pub async fn set_birthday(
         &self,
         user: &user::Model,
@@ -50,13 +64,7 @@ impl BirthdayService {
             .ok_or(CoreError::invalid_birthday("Invalid date."))?;
 
         if let Some(user_birthday) = self.stores.user_birthday.find_by_user_id(&user.id).await? {
-            let now = chrono::Utc::now();
-            if user_birthday
-                .updated_at
-                .and_utc()
-                .add(Duration::hours(BIRTHDAY_UPDATE_TIMEOUT_HOURS))
-                > now
-            {
+            if !self.can_update(&user_birthday) {
                 return Err(CoreError::BirthdayTimeout);
             }
 

@@ -2,9 +2,14 @@
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.ts'
 import { onMounted } from 'vue'
+import { useCsrfStore } from '@/stores/csrf.ts'
 
 const authStore = useAuthStore()
-onMounted(() => authStore.fetchUser())
+const csrfStore = useCsrfStore()
+onMounted(() => {
+  authStore.fetchUser()
+  csrfStore.ensureCsrf()
+})
 </script>
 
 <template>

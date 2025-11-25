@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 neobabu-core = { workspace = true }
 axum = "0.8.7"
+axum_csrf = { version = "0.11.0", features = ["layer"] }
 governor = "0.10.2"
 oauth2 = "5.0.0"
 reqwest = "0.12.24"

@@ -15,11 +15,22 @@ pub fn build_session_layer(
 ) -> SessionManagerLayer<SessionStorage, SignedCookie> {
     let session_storage = SessionStorage::new(state.core.stores.dashboard_session.clone());
     let key = Key::from(state.config.session_secret.as_bytes());
-    SessionManagerLayer::new(session_storage)
-        .with_expiry(Expiry::OnInactivity(Duration::days(14)))
-        .with_same_site(SameSite::Lax)
-        .with_signed(key)
-        .with_secure(false)
+
+    if state.config.is_dev_mode() {
+        SessionManagerLayer::new(session_storage)
+            .with_expiry(Expiry::OnInactivity(Duration::days(14)))
+            .with_same_site(SameSite::Lax)
+            .with_signed(key)
+            .with_secure(false)
+    } else {
+        SessionManagerLayer::new(session_storage)
+            .with_expiry(Expiry::OnInactivity(Duration::days(14)))
+            .with_same_site(SameSite::Lax)
+            .with_signed(key)
+            .with_domain("neobabu.lemon.industries")
+            .with_http_only(true)
+            .with_secure(true)
+    }
 }
 
 #[derive(Debug, Clone)]

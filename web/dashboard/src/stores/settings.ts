@@ -9,7 +9,7 @@ export interface UserBirthdaySettings {
   day: number
   month: number
   year?: number
-  updated_at: number
+  updatable: boolean
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -43,6 +43,7 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   return {
+    fetchSettings,
     settings,
     error,
     loading,

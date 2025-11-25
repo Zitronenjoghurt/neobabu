@@ -3,11 +3,14 @@ use reqwest::header::{HeaderMap, HeaderValue, IntoHeaderName};
 use reqwest::Url;
 use reqwest_middleware::ClientWithMiddleware;
 use serde::de::DeserializeOwned;
+use std::sync::Arc;
 
 pub struct RequestBuilder<'a> {
     client: &'a ClientWithMiddleware,
     url: Url,
     headers: HeaderMap,
+    rate_limiter: Option<Arc<leaky_bucket::RateLimiter>>,
+    cost: usize,
 }
 
 impl<'a> RequestBuilder<'a> {
@@ -16,7 +19,14 @@ impl<'a> RequestBuilder<'a> {
             client,
             url: Url::parse(url.as_ref())?,
             headers: HeaderMap::new(),
+            rate_limiter: None,
+            cost: 1,
         })
+    }
+
+    pub fn rate_limiter(mut self, rate_limiter: &Arc<leaky_bucket::RateLimiter>) -> Self {
+        self.rate_limiter = Some(rate_limiter.clone());
+        self
     }
 
     pub fn header(mut self, key: impl IntoHeaderName, value: impl AsRef<str>) -> CoreResult<Self> {
@@ -38,6 +48,10 @@ impl<'a> RequestBuilder<'a> {
     }
 
     pub async fn get_json<T: DeserializeOwned>(self) -> CoreResult<T> {
+        if let Some(rate_limiter) = self.rate_limiter {
+            rate_limiter.acquire(self.cost).await
+        }
+
         Ok(self
             .client
             .get(self.url)

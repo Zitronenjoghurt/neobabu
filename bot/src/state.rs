@@ -60,5 +60,6 @@ fn load_core_config(bot_config: &BotConfig) -> BotResult<Config> {
     Ok(Config {
         db_url,
         nasa_api_key: bot_config.credentials.nasa_api.clone(),
+        youtube_api_key: bot_config.credentials.youtube_api.clone(),
     })
 }

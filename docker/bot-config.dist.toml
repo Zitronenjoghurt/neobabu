@@ -1,6 +1,7 @@
 [credentials]
 token = ""
 # nasa_api = ""
+# youtube_api = ""
 
 [emojis]
 arrow_back = 0

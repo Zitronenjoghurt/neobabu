@@ -8,11 +8,15 @@ pub mod dashboard_session;
 pub mod guild;
 pub mod guild_apod;
 pub mod guild_birthday;
+pub mod guild_youtube;
+pub mod guild_youtube_channel;
 pub mod rps_games;
 pub mod rps_user;
 pub mod user;
 pub mod user_birthday;
 pub mod user_guild;
+pub mod youtube_channel;
+pub mod youtube_video;
 
 pub struct Stores {
     pub apod: Arc<apod::ApodStore>,

@@ -17,6 +17,10 @@ pub enum Relation {
     GuildApod,
     #[sea_orm(has_one = "super::guild_birthday::Entity")]
     GuildBirthday,
+    #[sea_orm(has_one = "super::guild_youtube::Entity")]
+    GuildYoutube,
+    #[sea_orm(has_many = "super::guild_youtube_channel::Entity")]
+    GuildYoutubeChannel,
     #[sea_orm(has_many = "super::user_guild::Entity")]
     UserGuild,
 }
@@ -33,6 +37,18 @@ impl Related<super::guild_birthday::Entity> for Entity {
     }
 }
 
+impl Related<super::guild_youtube::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::GuildYoutube.def()
+    }
+}
+
+impl Related<super::guild_youtube_channel::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::GuildYoutubeChannel.def()
+    }
+}
+
 impl Related<super::user_guild::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::UserGuild.def()
@@ -45,6 +61,15 @@ impl Related<super::user::Entity> for Entity {
     }
     fn via() -> Option<RelationDef> {
         Some(super::user_guild::Relation::Guild.def().rev())
+    }
+}
+
+impl Related<super::youtube_channel::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::guild_youtube_channel::Relation::YoutubeChannel.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::guild_youtube_channel::Relation::Guild.def().rev())
     }
 }
 

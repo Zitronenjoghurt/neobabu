@@ -30,6 +30,8 @@ pub enum CoreError {
     InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
     #[error("Missing NASA API key")]
     MissingNasaApiKey,
+    #[error("Missing Youtube API key")]
+    MissingYoutubeApiKey,
     #[error("OS error: {0}")]
     Os(#[from] rand::rand_core::OsError),
     #[error("Reqwest error: {0}")]
@@ -63,6 +65,7 @@ impl CoreError {
             | Self::InvalidHeaderValue(_)
             | Self::InvalidMonth(_)
             | Self::MissingNasaApiKey
+            | Self::MissingYoutubeApiKey
             | Self::Os(_)
             | Self::Reqwest(_)
             | Self::ReqwestMiddleware(_)

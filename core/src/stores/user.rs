@@ -33,7 +33,8 @@ impl UserStore {
         Ok(new_user.insert(self.db.conn()).await?)
     }
 
-    pub async fn update(&self, mode: user::ActiveModel) -> CoreResult<user::Model> {
-        Ok(mode.update(self.db.conn()).await?)
+    pub async fn update(&self, mut model: user::ActiveModel) -> CoreResult<user::Model> {
+        model.updated_at = Set(chrono::Utc::now().naive_utc());
+        Ok(model.update(self.db.conn()).await?)
     }
 }

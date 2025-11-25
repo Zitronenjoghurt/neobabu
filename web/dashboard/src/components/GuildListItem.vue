@@ -30,7 +30,8 @@ const iconUrl = computed(() => {
       />
 
       <span
-        class="text-m font-semibold white-space-nowrap overflow-hidden text-overflow-ellipsis flex-1"
+        :class="guild.is_active ? 'font-semibold' : 'text-color-secondary'"
+        class="white-space-nowrap overflow-hidden text-overflow-ellipsis"
         >{{ guild.name }}</span
       >
     </div>

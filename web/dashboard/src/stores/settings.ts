@@ -42,8 +42,27 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  const saveBirthday = async (birthdayData: UserBirthdaySettings) => {
+    loading.value = true
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      if (settings.value) {
+        settings.value.birthday = birthdayData
+      }
+
+      return true
+    } catch (err) {
+      error.value = 'Failed to save settings'
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     fetchSettings,
+    saveBirthday,
     settings,
     error,
     loading,

@@ -5,7 +5,7 @@ import { useSettingsStore } from '@/stores/settings.ts'
 
 const settingsStore = useSettingsStore()
 const settingsCategories = ref([{ label: 'Birthday', value: 'birthday', icon: 'pi-gift' }])
-const selectedCategory = ref('user')
+const selectedCategory = ref('birthday')
 
 onMounted(() => settingsStore.fetchSettings())
 </script>
@@ -35,15 +35,13 @@ onMounted(() => settingsStore.fetchSettings())
       </div>
     </aside>
 
-    <!-- Main Content -->
     <div class="flex-1 flex flex-column surface-card surface-border border-1 border-round-right">
       <div class="flex-1 overflow-y-auto">
-        <div class="max-w-4xl mx-auto p-5">
+        <div v-if="!settingsStore.loading" class="max-w-4xl mx-auto p-5">
           <BirthdaySettings v-if="selectedCategory === 'birthday'" />
-          <div class="mt-5 pt-4 border-top-1 surface-border">
-            <Button class="mr-2" label="Save Changes" />
-            <Button label="Reset" severity="secondary" text />
-          </div>
+        </div>
+        <div v-else>
+          <ProgressSpinner />
         </div>
       </div>
     </div>

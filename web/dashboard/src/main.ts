@@ -8,6 +8,7 @@ import { definePreset } from '@primeuix/themes'
 
 import App from './App.vue'
 import router from './router'
+import { ToastService } from 'primevue'
 
 const ThemePreset = definePreset(Aura, {
   semantic: {
@@ -36,5 +37,6 @@ app.use(PrimeVue, {
     preset: ThemePreset,
   },
 })
+app.use(ToastService)
 
 app.mount('#app')

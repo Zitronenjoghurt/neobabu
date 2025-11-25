@@ -39,16 +39,28 @@ const guildStore = useGuildStore()
       </div>
     </div>
     <div
-      v-else
+      v-else-if="guildStore.selectedGuild"
       class="p-4 flex-1 flex flex-column surface-card surface-border border-1 border-round-right align-items-center justify-content-center text-center select-none"
     >
       <div class="mb-4">
-        <i class="pi pi-discord text-7xl text-primary"></i>
+        <i class="pi pi-exclamation-triangle text-7xl text-primary"></i>
       </div>
       <h1 class="text-5xl md:text-6xl font-bold mb-3">Bot is not on this server</h1>
       <p class="text-xl text-color-secondary mb-4">
         Once development reached a certain point you might be able to add it to your own server
         right here
+      </p>
+    </div>
+    <div
+      v-else
+      class="p-4 flex-1 flex flex-column surface-card surface-border border-1 border-round-right align-items-center justify-content-center text-center select-none"
+    >
+      <div class="mb-4">
+        <i class="pi pi-question-circle text-7xl text-primary"></i>
+      </div>
+      <h1 class="text-5xl md:text-6xl font-bold mb-3">No server selected</h1>
+      <p class="text-xl text-color-secondary mb-4">
+        Select a server on the left side to get started
       </p>
     </div>
   </main>

@@ -8,6 +8,8 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
     pub name: String,
+    #[sea_orm(unique)]
+    pub handle: Option<String>,
     pub icon_url: Option<String>,
     pub next_resubscription_at: DateTime,
     pub created_at: DateTime,

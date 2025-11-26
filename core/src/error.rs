@@ -20,6 +20,10 @@ pub enum CoreError {
     DecryptDataTooShort,
     #[error("Feature not enabled on server: {0:?}")]
     FeatureNotEnabled(Feature),
+    #[error("Youtube channel already subscribed on this server")]
+    GuildYoutubeChannelAlreadySubscribed,
+    #[error("Server youtube channel limit reached")]
+    GuildYoutubeChannelLimitReached,
     #[error("Hex error: {0}")]
     Hex(#[from] hex::FromHexError),
     #[error("Invalid birthday: {0}")]
@@ -44,8 +48,14 @@ pub enum CoreError {
     Unauthorized,
     #[error("Failed to parse URL: {0}")]
     UrlParse(#[from] url::ParseError),
+    #[error("User youtube channel limit reached")]
+    UserYoutubeChannelLimitReached,
     #[error("UTF-8 error: {0}")]
     Utf8(#[from] std::string::FromUtf8Error),
+    #[error(
+        "Youtube channel not found, make sure you used the correct handle. Like @veritasium (usually found in the channels URL)."
+    )]
+    YoutubeChannelNotFound,
 }
 
 impl CoreError {
@@ -53,8 +63,12 @@ impl CoreError {
         match self {
             Self::BirthdayTimeout
             | Self::FeatureNotEnabled(_)
+            | Self::GuildYoutubeChannelAlreadySubscribed
+            | Self::GuildYoutubeChannelLimitReached
             | Self::InvalidBirthday(_)
-            | Self::Unauthorized => true,
+            | Self::Unauthorized
+            | Self::UserYoutubeChannelLimitReached
+            | Self::YoutubeChannelNotFound => true,
             Self::Aed(_)
             | Self::Base64Decode(_)
             | Self::CronScheduler(_)

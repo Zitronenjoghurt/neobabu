@@ -32,7 +32,7 @@ impl YoutubeApi {
             .query("part", "snippet,statistics,contentDetails"))
     }
 
-    pub async fn fetch_video(&self, video_id: &str) -> CoreResult<Option<YoutubeVideo>> {
+    pub async fn fetch_video(&self, video_id: impl AsRef<str>) -> CoreResult<Option<YoutubeVideo>> {
         let response: YoutubeApiResponse<YoutubeVideoItem> = self
             .base_request("videos")?
             .query("id", video_id)
@@ -41,10 +41,25 @@ impl YoutubeApi {
         Ok(response.items.into_iter().next().map(|item| item.into()))
     }
 
-    pub async fn fetch_channel(&self, channel_id: &str) -> CoreResult<Option<YoutubeChannel>> {
+    pub async fn fetch_channel_by_id(
+        &self,
+        id: impl AsRef<str>,
+    ) -> CoreResult<Option<YoutubeChannel>> {
         let response: YoutubeApiResponse<YoutubeChannelItem> = self
             .base_request("channels")?
-            .query("id", channel_id)
+            .query("id", id)
+            .get_json()
+            .await?;
+        Ok(response.items.into_iter().next().map(|item| item.into()))
+    }
+
+    pub async fn fetch_channel_by_handle(
+        &self,
+        handle: impl AsRef<str>,
+    ) -> CoreResult<Option<YoutubeChannel>> {
+        let response: YoutubeApiResponse<YoutubeChannelItem> = self
+            .base_request("channels")?
+            .query("forHandle", handle)
             .get_json()
             .await?;
         Ok(response.items.into_iter().next().map(|item| item.into()))
@@ -77,6 +92,7 @@ pub struct YoutubeChannel {
 
 #[derive(serde::Deserialize)]
 struct YoutubeApiResponse<T> {
+    #[serde(default = "Vec::new")]
     items: Vec<T>,
 }
 

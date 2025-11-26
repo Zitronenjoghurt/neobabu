@@ -9,6 +9,7 @@ pub struct Model {
     pub guild_id: String,
     #[sea_orm(primary_key, auto_increment = false)]
     pub channel_id: String,
+    pub created_by_user_id: String,
     pub created_at: DateTime,
 }
 

@@ -6,6 +6,7 @@ mod birthday;
 mod game;
 mod ping;
 mod space;
+mod youtube;
 
 pub fn get_commands() -> Vec<Command<BotState, BotError>> {
     vec![
@@ -13,5 +14,6 @@ pub fn get_commands() -> Vec<Command<BotState, BotError>> {
         game::game(),
         birthday::birthday(),
         space::space(),
+        youtube::youtube(),
     ]
 }

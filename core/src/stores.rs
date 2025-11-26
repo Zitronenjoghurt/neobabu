@@ -24,11 +24,15 @@ pub struct Stores {
     pub guild: Arc<guild::GuildStore>,
     pub guild_apod: Arc<guild_apod::GuildApodStore>,
     pub guild_birthday: Arc<guild_birthday::GuildBirthdayStore>,
+    pub guild_youtube: Arc<guild_youtube::GuildYoutubeStore>,
+    pub guild_youtube_channel: Arc<guild_youtube_channel::GuildYoutubeChannelStore>,
     pub rps_games: Arc<rps_games::RPSGamesStore>,
     pub rps_user: Arc<rps_user::RPSUserStore>,
     pub user: Arc<user::UserStore>,
     pub user_birthday: Arc<user_birthday::UserBirthdayStore>,
     pub user_guild: Arc<user_guild::UserGuildStore>,
+    pub youtube_channel: Arc<youtube_channel::YoutubeChannelStore>,
+    pub youtube_video: Arc<youtube_video::YoutubeVideoStore>,
 }
 
 impl Stores {
@@ -39,11 +43,15 @@ impl Stores {
             guild: guild::GuildStore::initialize(db),
             guild_apod: guild_apod::GuildApodStore::initialize(db),
             guild_birthday: guild_birthday::GuildBirthdayStore::initialize(db),
+            guild_youtube: guild_youtube::GuildYoutubeStore::initialize(db),
+            guild_youtube_channel: guild_youtube_channel::GuildYoutubeChannelStore::initialize(db),
             rps_games: rps_games::RPSGamesStore::initialize(db),
             rps_user: rps_user::RPSUserStore::initialize(db),
             user: user::UserStore::initialize(db),
             user_birthday: user_birthday::UserBirthdayStore::initialize(db),
             user_guild: user_guild::UserGuildStore::initialize(db),
+            youtube_channel: youtube_channel::YoutubeChannelStore::initialize(db),
+            youtube_video: youtube_video::YoutubeVideoStore::initialize(db),
         })
     }
 }

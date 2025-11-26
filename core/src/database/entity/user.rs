@@ -10,6 +10,7 @@ pub struct Model {
     pub username: Option<String>,
     pub avatar_hash: Option<String>,
     pub encrypted_oauth_token: Option<String>,
+    pub permissions: i64,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

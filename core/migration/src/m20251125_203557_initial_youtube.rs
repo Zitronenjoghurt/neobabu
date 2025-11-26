@@ -13,8 +13,16 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(string(YoutubeChannel::Id).primary_key())
                     .col(string(YoutubeChannel::Name))
+                    .col(
+                        string_null(YoutubeChannel::Handle)
+                            .default(Expr::null())
+                            .unique_key(),
+                    )
                     .col(string_null(YoutubeChannel::IconUrl).default(Expr::null()))
-                    .col(timestamp(YoutubeChannel::NextResubscriptionAt))
+                    .col(
+                        timestamp(YoutubeChannel::NextResubscriptionAt)
+                            .default(Expr::current_timestamp()),
+                    )
                     .col(timestamp(YoutubeChannel::CreatedAt).default(Expr::current_timestamp()))
                     .col(timestamp(YoutubeChannel::UpdatedAt).default(Expr::current_timestamp()))
                     .to_owned(),
@@ -71,6 +79,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(string(GuildYoutubeChannel::GuildId))
                     .col(string(GuildYoutubeChannel::ChannelId))
+                    .col(string(GuildYoutubeChannel::CreatedByUserId))
                     .col(
                         timestamp(GuildYoutubeChannel::CreatedAt)
                             .default(Expr::current_timestamp()),
@@ -131,6 +140,7 @@ enum YoutubeChannel {
     Table,
     Id,
     Name,
+    Handle,
     IconUrl,
     NextResubscriptionAt,
     CreatedAt,
@@ -165,5 +175,6 @@ enum GuildYoutubeChannel {
     Table,
     GuildId,
     ChannelId,
+    CreatedByUserId,
     CreatedAt,
 }

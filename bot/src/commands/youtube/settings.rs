@@ -7,23 +7,23 @@ use crate::Context;
 use neobabu_core::stores::{IntoActiveModel, Set};
 use poise::serenity_prelude::{Channel, CreateEmbed, Role};
 
-/// Customize server-wide Astronomy Picture of the Day notification settings.
+/// Customize server-wide youtube notification settings.
 #[poise::command(slash_command, guild_only, required_permissions = "MANAGE_GUILD")]
-pub async fn admin(
+pub async fn settings(
     ctx: Context<'_>,
-    #[description = "Whether to enable or disable apod notifications."] enable: Option<bool>,
-    #[description = "The channel to send apod notifications to."]
+    #[description = "Whether to enable or disable youtube notifications."] enable: Option<bool>,
+    #[description = "The channel to send youtube notifications to."]
     #[channel_types("Text")]
     channel: Option<Channel>,
-    #[description = "The role to mention in apod notifications."] role: Option<Role>,
+    #[description = "The role to mention in youtube notifications."] role: Option<Role>,
 ) -> BotResult<()> {
     ctx.defer_ephemeral().await?;
 
     let guild = ctx.fetch_guild_model().await?;
-    let guild_apod = ctx.stores().guild_apod.fetch_or_create(&guild).await?;
-    let guild_id = guild_apod.guild_id.clone();
+    let guild_youtube = ctx.stores().guild_youtube.fetch_or_create(&guild).await?;
+    let guild_id = guild_youtube.guild_id.clone();
 
-    let mut active = guild_apod.into_active_model();
+    let mut active = guild_youtube.into_active_model();
     let updated = enable.is_some() || channel.is_some() || role.is_some();
 
     if let Some(enable) = enable {
@@ -37,7 +37,7 @@ pub async fn admin(
     }
 
     let (enabled, channel_id, role_id) = if updated {
-        let model = ctx.stores().guild_apod.update(active).await?;
+        let model = ctx.stores().guild_youtube.update(active).await?;
         (
             model.enabled,
             model.notification_channel_id,
@@ -60,9 +60,9 @@ pub async fn admin(
 
     let embed = CreateEmbed::default()
         .title(if updated {
-            "APOD Settings Updated"
+            "Youtube Settings Updated"
         } else {
-            "APOD Settings"
+            "Youtube Settings"
         })
         .field("Enabled", format!("`{}`", format_bool(enabled)), false)
         .field("Channel", format_channel(channel_id), false)

@@ -8,13 +8,15 @@ mod auth;
 mod csrf;
 mod guilds;
 mod me;
+mod youtube;
 
 pub fn build_routes(state: &ServerState) -> Router<ServerState> {
     Router::new()
         .nest("/auth", auth::router())
         .nest("/csrf", csrf::router())
-        .nest("/me", me::router())
         .nest("/guilds", guilds::router())
+        .nest("/me", me::router())
+        .nest("/youtube", youtube::router())
         .layer(build_session_layer(state))
         .layer(build_csrf_layer(state))
         .layer(build_rate_limit_layer())

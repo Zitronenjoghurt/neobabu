@@ -6,12 +6,14 @@ use tokio::sync::broadcast;
 
 pub mod birthday_dm;
 pub mod birthday_notification;
+pub mod new_youtube_video;
 
 #[derive(Debug, Clone, Copy)]
 pub enum CoreEventType {
     BirthdayDM,
     BirthdayNotification,
     NewApod,
+    NewYoutubeVideo,
 }
 
 #[derive(Debug, Clone)]
@@ -19,6 +21,7 @@ pub enum CoreEvent {
     BirthdayDM(Box<BirthdayDM>),
     BirthdayNotification(Box<BirthdayNotification>),
     NewApod(Box<apod::Model>),
+    NewYoutubeVideo(Box<new_youtube_video::NewYoutubeVideo>),
 }
 
 impl CoreEvent {
@@ -27,6 +30,7 @@ impl CoreEvent {
             Self::BirthdayDM(_) => CoreEventType::BirthdayDM,
             Self::BirthdayNotification(_) => CoreEventType::BirthdayNotification,
             Self::NewApod(_) => CoreEventType::NewApod,
+            Self::NewYoutubeVideo(_) => CoreEventType::NewYoutubeVideo,
         }
     }
 
@@ -43,6 +47,10 @@ impl CoreEvent {
 
     pub fn new_apod(apod: apod::Model) -> Self {
         Self::NewApod(Box::new(apod))
+    }
+
+    pub fn new_youtube_video(video: new_youtube_video::NewYoutubeVideo) -> Self {
+        Self::NewYoutubeVideo(Box::new(video))
     }
 }
 

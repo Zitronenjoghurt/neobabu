@@ -3,6 +3,7 @@ use reqwest::header::{HeaderMap, HeaderValue, IntoHeaderName};
 use reqwest::Url;
 use reqwest_middleware::ClientWithMiddleware;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::sync::Arc;
 
 pub struct RequestBuilder<'a> {
@@ -47,6 +48,11 @@ impl<'a> RequestBuilder<'a> {
         self
     }
 
+    pub fn cost(mut self, cost: usize) -> Self {
+        self.cost = cost;
+        self
+    }
+
     pub async fn get_json<T: DeserializeOwned>(self) -> CoreResult<T> {
         if let Some(rate_limiter) = self.rate_limiter {
             rate_limiter.acquire(self.cost).await
@@ -60,5 +66,21 @@ impl<'a> RequestBuilder<'a> {
             .await?
             .json()
             .await?)
+    }
+
+    pub async fn post_form(self, form: impl Serialize) -> CoreResult<()> {
+        if let Some(rate_limiter) = self.rate_limiter {
+            rate_limiter.acquire(self.cost).await
+        };
+
+        self.client
+            .post(self.url)
+            .headers(self.headers)
+            .form(&form)
+            .send()
+            .await?
+            .error_for_status()?;
+
+        Ok(())
     }
 }

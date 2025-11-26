@@ -1,6 +1,7 @@
 use crate::database::entity::{guild, guild_youtube_channel, user, youtube_channel};
 use crate::database::Database;
 use crate::error::CoreResult;
+use futures::StreamExt;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, Set};
 use std::sync::Arc;
 
@@ -74,5 +75,16 @@ impl GuildYoutubeChannelStore {
             .filter(guild_youtube_channel::Column::CreatedByUserId.eq(user_id.as_ref()))
             .count(self.db.conn())
             .await?)
+    }
+
+    pub async fn stream_by_channel_id(
+        &self,
+        channel_id: impl AsRef<str>,
+    ) -> CoreResult<impl futures::Stream<Item = CoreResult<guild_youtube_channel::Model>>> {
+        Ok(guild_youtube_channel::Entity::find()
+            .filter(guild_youtube_channel::Column::ChannelId.eq(channel_id.as_ref()))
+            .stream(self.db.conn())
+            .await?
+            .map(|model| Ok(model?)))
     }
 }

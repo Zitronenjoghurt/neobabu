@@ -1,11 +1,13 @@
 use crate::error::CoreResult;
 use crate::NeobabuCore;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use tokio_cron_scheduler::{Job, JobScheduler};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 mod apod;
 mod birthday_notification;
+mod youtube_update;
 
 pub struct Scheduler {
     core: NeobabuCore,
@@ -38,6 +40,8 @@ impl Scheduler {
             birthday_notification::run,
         )
         .await?;
+        self.schedule_job("youtube_update", "30 * * * * *", youtube_update::run)
+            .await?;
         info!("Jobs successfully scheduled");
         Ok(())
     }
@@ -50,16 +54,34 @@ impl Scheduler {
         let core = self.core.clone();
         let job_name = name.to_string();
         let job_fn = Arc::new(job_fn);
+        let is_running = Arc::new(Mutex::new(false));
 
         let job = Job::new_async(cron, move |_uuid, _lock| {
             let core = core.clone();
             let job_name = job_name.clone();
             let job_fn = Arc::clone(&job_fn);
+            let is_running = Arc::clone(&is_running);
 
             Box::pin(async move {
+                let mut running = is_running.lock().await;
+
+                if *running {
+                    warn!("Job '{job_name}' is still running, skipping this execution");
+                    return;
+                }
+
+                *running = true;
+                drop(running);
+
                 info!("Running job '{job_name}'");
-                match job_fn(core).await {
-                    Ok(_) => info!("Job '{job_name}' finished successfully",),
+                let result = job_fn(core).await;
+
+                let mut running = is_running.lock().await;
+                *running = false;
+                drop(running);
+
+                match result {
+                    Ok(_) => info!("Job '{job_name}' finished successfully"),
                     Err(err) => error!("Job '{job_name}' failed: {}", err),
                 }
             })

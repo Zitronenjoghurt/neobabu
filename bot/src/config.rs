@@ -5,7 +5,6 @@ mod emoji;
 
 #[derive(serde::Deserialize)]
 pub struct BotConfig {
-    pub credentials: credentials::BotConfigCredentials,
     #[serde(default)]
     pub emojis: emoji::BotConfigEmoji,
 }

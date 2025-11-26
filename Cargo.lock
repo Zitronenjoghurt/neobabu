@@ -2141,12 +2141,17 @@ dependencies = [
  "async-trait",
  "axum",
  "axum_csrf",
+ "chrono",
  "governor",
+ "hex",
+ "hmac",
  "neobabu-core",
  "oauth2",
  "reqwest 0.12.24",
  "serde",
+ "serde-xml-rs",
  "serde_json",
+ "sha1",
  "thiserror 2.0.17",
  "tokio",
  "tower-http",
@@ -3524,6 +3529,18 @@ checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
  "serde_core",
  "serde_derive",
+]
+
+[[package]]
+name = "serde-xml-rs"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc2215ce3e6a77550b80a1c37251b7d294febaf42e36e21b7b411e0bf54d540d"
+dependencies = [
+ "log",
+ "serde",
+ "thiserror 2.0.17",
+ "xml",
 ]
 
 [[package]]
@@ -5399,6 +5416,12 @@ checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
 dependencies = [
  "tap",
 ]
+
+[[package]]
+name = "xml"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2df5825faced2427b2da74d9100f1e2e93c533fff063506a81ede1cf517b2e7e"
 
 [[package]]
 name = "yansi"

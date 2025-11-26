@@ -5,13 +5,19 @@ edition = "2024"
 
 [dependencies]
 neobabu-core = { workspace = true }
+async-trait = "0.1.89"
 axum = "0.8.7"
 axum_csrf = { version = "0.11.0", features = ["layer"] }
+chrono = { workspace = true }
 governor = "0.10.2"
+hex = "0.4.3"
+hmac = "0.12.1"
 oauth2 = "5.0.0"
 reqwest = "0.12.24"
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde-xml-rs = "0.8.2"
+sha1 = "0.10.6"
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tower_governor = "0.8.0"
@@ -19,4 +25,3 @@ tower-http = { version = "0.6.6", features = ["fs"] }
 tower-sessions = { version = "0.14.0", features = ["signed"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-async-trait = "0.1.89"

@@ -56,6 +56,10 @@ pub enum CoreError {
         "Youtube channel not found, make sure you used the correct handle. Like @veritasium (usually found in the channels URL)."
     )]
     YoutubeChannelNotFound,
+    #[error("Youtube hub callback URL missing")]
+    YoutubeHubCallbackUrlMissing,
+    #[error("Youtube hub secret missing")]
+    YoutubeHubSecretMissing,
 }
 
 impl CoreError {
@@ -85,7 +89,9 @@ impl CoreError {
             | Self::ReqwestMiddleware(_)
             | Self::Serenity(_)
             | Self::UrlParse(_)
-            | Self::Utf8(_) => false,
+            | Self::Utf8(_)
+            | Self::YoutubeHubCallbackUrlMissing
+            | Self::YoutubeHubSecretMissing => false,
         }
     }
 

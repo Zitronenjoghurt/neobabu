@@ -1,6 +1,7 @@
 use crate::database::entity::youtube_channel;
 use crate::database::Database;
 use crate::error::CoreResult;
+use futures::StreamExt;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use std::sync::Arc;
 
@@ -52,5 +53,22 @@ impl YoutubeChannelStore {
         }
         model.updated_at = Set(chrono::Utc::now().naive_utc());
         Ok(model.update(self.db.conn()).await?)
+    }
+
+    pub async fn delete(&self, id: impl AsRef<str>) -> CoreResult<()> {
+        let _ = youtube_channel::Entity::delete_by_id(id.as_ref())
+            .exec(self.db.conn())
+            .await?;
+        Ok(())
+    }
+
+    pub async fn stream_pending_resubscription(
+        &self,
+    ) -> CoreResult<impl futures::Stream<Item = CoreResult<youtube_channel::Model>>> {
+        Ok(youtube_channel::Entity::find()
+            .filter(youtube_channel::Column::NextResubscriptionAt.lte(chrono::Utc::now()))
+            .stream(self.db.conn())
+            .await?
+            .map(|model| Ok(model?)))
     }
 }

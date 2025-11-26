@@ -22,8 +22,8 @@ async fn main() {
     init_tracing();
     info!("Starting bot...");
 
+    let bot_token = std::env::var("BOT_TOKEN").unwrap();
     let state = BotState::initialize().await.unwrap();
-    let config = state.config.clone();
 
     let commands = commands::get_commands();
     let options = poise::FrameworkOptions {
@@ -57,7 +57,7 @@ async fn main() {
         | GatewayIntents::GUILDS
         | GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES;
-    let client = ClientBuilder::new(&config.credentials.token, intents)
+    let client = ClientBuilder::new(&bot_token, intents)
         .framework(framework)
         .await;
 

@@ -67,8 +67,14 @@ impl ServerState {
 }
 
 fn load_core_config(config: &ServerConfig) -> ServerResult<Config> {
+    let youtube_api_key = std::env::var("YOUTUBE_API_KEY")?;
+    let youtube_hub_callback_url = std::env::var("YOUTUBE_HUB_CALLBACK_URL")?;
+    let youtube_hub_secret = std::env::var("YOUTUBE_HUB_SECRET")?;
     Ok(Config {
         db_url: config.db_url.clone(),
+        youtube_api_key: Some(youtube_api_key),
+        youtube_hub_callback_url: Some(youtube_hub_callback_url),
+        youtube_hub_secret: Some(youtube_hub_secret),
         ..Default::default()
     })
 }

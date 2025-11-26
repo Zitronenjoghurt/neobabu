@@ -19,6 +19,7 @@ impl MigrationTrait for Migration {
                             .unique_key(),
                     )
                     .col(string_null(YoutubeChannel::IconUrl).default(Expr::null()))
+                    .col(boolean(YoutubeChannel::RequestedResubscription).default(false))
                     .col(
                         timestamp(YoutubeChannel::NextResubscriptionAt)
                             .default(Expr::current_timestamp()),
@@ -36,7 +37,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(string(YoutubeVideo::Id).primary_key())
                     .col(string(YoutubeVideo::ChannelId))
-                    .col(string(YoutubeVideo::Title))
+                    .col(string_null(YoutubeVideo::Title).default(Expr::null()))
                     .col(string_null(YoutubeVideo::ThumbnailUrl).default(Expr::null()))
                     .col(boolean(YoutubeVideo::NotificationSent).default(false))
                     .col(timestamp(YoutubeVideo::CreatedAt).default(Expr::current_timestamp()))
@@ -142,6 +143,7 @@ enum YoutubeChannel {
     Name,
     Handle,
     IconUrl,
+    RequestedResubscription,
     NextResubscriptionAt,
     CreatedAt,
     UpdatedAt,

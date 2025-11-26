@@ -3,7 +3,9 @@ use crate::error::{CoreError, CoreResult};
 use crate::integrations::apis::youtube::YoutubeChannel;
 use crate::integrations::apis::Apis;
 use crate::stores::Stores;
+use chrono::Duration;
 use sea_orm::{IntoActiveModel, Set};
+use std::ops::Add;
 use std::sync::Arc;
 
 const GUILD_CHANNEL_LIMIT: u64 = 100;
@@ -32,6 +34,25 @@ impl YoutubeService {
             icon_url: Set(channel_info.icon_url),
             ..Default::default()
         }
+    }
+
+    pub async fn update_channel_if_needed(
+        &self,
+        channel: youtube_channel::Model,
+    ) -> CoreResult<Option<youtube_channel::Model>> {
+        if channel.updated_at.add(Duration::days(7)) >= chrono::Utc::now().naive_utc() {
+            return Ok(Some(channel));
+        };
+
+        let Some(channel_info) = self.apis.youtube.fetch_channel_by_id(&channel.id).await? else {
+            self.stores.youtube_channel.delete(&channel.id).await?;
+            return Ok(None);
+        };
+
+        let mut active = channel.into_active_model();
+        active.name = Set(channel_info.title);
+        active.icon_url = Set(channel_info.icon_url);
+        Ok(Some(self.stores.youtube_channel.update(active).await?))
     }
 
     pub async fn find_channel_by_id(

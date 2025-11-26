@@ -13,7 +13,11 @@ pub struct Apis {
 impl Apis {
     pub fn initialize(config: &Arc<Config>) -> Arc<Self> {
         let apod = Arc::new(nasa_apod::NasaApodApi::new(config.nasa_api_key.clone()));
-        let youtube = Arc::new(youtube::YoutubeApi::new(config.youtube_api_key.clone()));
+        let youtube = Arc::new(youtube::YoutubeApi::new(
+            config.youtube_api_key.clone(),
+            config.youtube_hub_callback_url.clone(),
+            config.youtube_hub_secret.clone(),
+        ));
         Arc::new(Self { apod, youtube })
     }
 }

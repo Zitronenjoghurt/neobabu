@@ -15,7 +15,7 @@ use poise::serenity_prelude::{ComponentInteraction, CreateEmbed, CreateEmbedAuth
     slash_command,
     guild_only,
     required_permissions = "MANAGE_GUILD",
-    user_cooldown = "45"
+    user_cooldown = "30"
 )]
 pub async fn subscribe(
     ctx: Context<'_>,
@@ -57,7 +57,7 @@ pub async fn subscribe(
         .description(format!("Do you want to subscribe to this channel?\n\nDouble check this is the correct channel before proceeding:\n{channel_url}"));
     InteractiveEmbed::new(&ctx, embed)
         .row(AcceptRow(row))
-        .timeout(std::time::Duration::from_secs(45))
+        .timeout(std::time::Duration::from_secs(120))
         .run()
         .await?;
 

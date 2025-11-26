@@ -11,6 +11,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub handle: Option<String>,
     pub icon_url: Option<String>,
+    pub requested_resubscription: bool,
     pub next_resubscription_at: DateTime,
     pub created_at: DateTime,
     pub updated_at: DateTime,

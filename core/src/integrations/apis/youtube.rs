@@ -7,13 +7,21 @@ use std::time::Duration;
 pub struct YoutubeApi {
     client: IntegrationClient,
     token: Option<String>,
+    hub_callback_url: Option<String>,
+    pub hub_secret: Option<String>,
 }
 
 impl YoutubeApi {
-    pub fn new(token: Option<String>) -> Self {
+    pub fn new(
+        token: Option<String>,
+        hub_callback_url: Option<String>,
+        hub_secret: Option<String>,
+    ) -> Self {
         Self {
-            client: IntegrationClient::new(15, 1, Duration::from_secs(9)),
+            client: IntegrationClient::new(1000, 1, Duration::from_secs(9)),
             token,
+            hub_callback_url,
+            hub_secret,
         }
     }
 
@@ -63,6 +71,37 @@ impl YoutubeApi {
             .get_json()
             .await?;
         Ok(response.items.into_iter().next().map(|item| item.into()))
+    }
+
+    pub async fn subscribe(&self, channel_id: impl AsRef<str>) -> CoreResult<()> {
+        let Some(callback_url) = &self.hub_callback_url else {
+            return Err(CoreError::YoutubeHubCallbackUrlMissing);
+        };
+
+        let Some(secret) = &self.hub_secret else {
+            return Err(CoreError::YoutubeHubSecretMissing);
+        };
+
+        let topic = format!(
+            "https://www.youtube.com/xml/feeds/videos.xml?channel_id={}",
+            channel_id.as_ref()
+        );
+
+        let params = [
+            ("hub.callback", callback_url.as_ref()),
+            ("hub.mode", "subscribe"),
+            ("hub.topic", topic.as_ref()),
+            ("hub.lease_seconds", "864000"),
+            ("hub.secret", secret.as_ref()),
+        ];
+
+        self.client
+            .request("https://pubsububbub.appspot.com/subscribe")?
+            .cost(0)
+            .post_form(params)
+            .await?;
+
+        Ok(())
     }
 }
 

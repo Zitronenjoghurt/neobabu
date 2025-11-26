@@ -8,7 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
     pub channel_id: String,
-    pub title: String,
+    pub title: Option<String>,
     pub thumbnail_url: Option<String>,
     pub notification_sent: bool,
     pub created_at: DateTime,

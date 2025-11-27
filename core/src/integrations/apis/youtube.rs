@@ -96,7 +96,7 @@ impl YoutubeApi {
         ];
 
         self.client
-            .request("https://pubsububbub.appspot.com/subscribe")?
+            .request("https://pubsubhubbub.appspot.com/subscribe")?
             .cost(0)
             .post_form(params)
             .await?;

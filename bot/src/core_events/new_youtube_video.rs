@@ -38,7 +38,7 @@ pub async fn handle(ctx: &Context, state: &BotState, event: NewYoutubeVideo) -> 
         embed = embed.title(title);
     }
     if let Some(thumbnail_url) = &event.video_model.thumbnail_url {
-        embed = embed.thumbnail(thumbnail_url);
+        embed = embed.image(thumbnail_url);
     }
 
     let mut guild_yt_channels = state

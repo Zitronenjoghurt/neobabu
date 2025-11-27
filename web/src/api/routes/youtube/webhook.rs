@@ -13,9 +13,9 @@ use serde::Deserialize;
 use sha1::Sha1;
 use std::ops::Add;
 use std::time::Duration;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 struct WebhookQuery {
     #[serde(default, alias = "hub.challenge")]
     hub_challenge: Option<String>,
@@ -43,6 +43,8 @@ async fn get_webhook(
     State(state): State<ServerState>,
     Query(query): Query<WebhookQuery>,
 ) -> impl IntoResponse {
+    debug!("Received YouTube Hub verification request: {:?}", query);
+
     if let Some(challenge) = query.hub_challenge
         && let Some(topic) = query.hub_topic
         && let Some(lease_seconds) = query.hub_lease_seconds
@@ -52,8 +54,10 @@ async fn get_webhook(
             .nth(1)
             .and_then(|tail| tail.split('&').next())
         else {
+            debug!("Invalid YouTube Hub topic: {}", topic);
             return StatusCode::BAD_REQUEST.into_response();
         };
+        debug!("YouTube Hub topic channel ID: {}", channel_id);
 
         let channel = match state
             .core
@@ -63,7 +67,10 @@ async fn get_webhook(
             .await
         {
             Ok(Some(channel)) => channel,
-            _ => return StatusCode::BAD_REQUEST.into_response(),
+            _ => {
+                debug!("Invalid youtube hub channel id: {}", channel_id);
+                return StatusCode::BAD_REQUEST.into_response();
+            }
         };
 
         if !channel.requested_resubscription {

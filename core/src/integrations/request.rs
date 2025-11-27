@@ -1,6 +1,6 @@
 use crate::error::CoreResult;
 use reqwest::header::{HeaderMap, HeaderValue, IntoHeaderName};
-use reqwest::Url;
+use reqwest::{Response, Url};
 use reqwest_middleware::ClientWithMiddleware;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -68,19 +68,18 @@ impl<'a> RequestBuilder<'a> {
             .await?)
     }
 
-    pub async fn post_form(self, form: impl Serialize) -> CoreResult<()> {
+    pub async fn post_form(self, form: impl Serialize) -> CoreResult<Response> {
         if let Some(rate_limiter) = self.rate_limiter {
             rate_limiter.acquire(self.cost).await
         };
 
-        self.client
+        Ok(self
+            .client
             .post(self.url)
             .headers(self.headers)
             .form(&form)
             .send()
             .await?
-            .error_for_status()?;
-
-        Ok(())
+            .error_for_status()?)
     }
 }

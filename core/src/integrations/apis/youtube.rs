@@ -3,6 +3,7 @@ use crate::integrations::client::IntegrationClient;
 use crate::integrations::request::RequestBuilder;
 use std::collections::HashMap;
 use std::time::Duration;
+use tracing::info;
 
 pub struct YoutubeApi {
     client: IntegrationClient,
@@ -95,11 +96,17 @@ impl YoutubeApi {
             ("hub.secret", secret.as_ref()),
         ];
 
-        self.client
+        let response = self
+            .client
             .request("https://pubsubhubbub.appspot.com/subscribe")?
             .cost(0)
             .post_form(params)
             .await?;
+        info!(
+            "Youtube Hub subscription response {}, body: {}",
+            response.status(),
+            response.text().await?
+        );
 
         Ok(())
     }

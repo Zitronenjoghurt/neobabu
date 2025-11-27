@@ -12,8 +12,9 @@ use reqwest::StatusCode;
 use serde::Deserialize;
 use sha1::Sha1;
 use std::ops::Add;
+use std::str::from_utf8;
 use std::time::Duration;
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 #[derive(Debug, serde::Deserialize)]
 struct WebhookQuery {
@@ -43,8 +44,6 @@ async fn get_webhook(
     State(state): State<ServerState>,
     Query(query): Query<WebhookQuery>,
 ) -> impl IntoResponse {
-    debug!("Received YouTube Hub verification request: {:?}", query);
-
     if let Some(challenge) = query.hub_challenge
         && let Some(topic) = query.hub_topic
         && let Some(lease_seconds) = query.hub_lease_seconds
@@ -54,10 +53,8 @@ async fn get_webhook(
             .nth(1)
             .and_then(|tail| tail.split('&').next())
         else {
-            debug!("Invalid YouTube Hub topic: {}", topic);
             return StatusCode::BAD_REQUEST.into_response();
         };
-        debug!("YouTube Hub topic channel ID: {}", channel_id);
 
         let channel = match state
             .core
@@ -67,10 +64,7 @@ async fn get_webhook(
             .await
         {
             Ok(Some(channel)) => channel,
-            _ => {
-                debug!("Invalid youtube hub channel id: {}", channel_id);
-                return StatusCode::BAD_REQUEST.into_response();
-            }
+            _ => return StatusCode::BAD_REQUEST.into_response(),
         };
 
         if !channel.requested_resubscription {
@@ -110,6 +104,11 @@ async fn post_webhook(
     if !validate_signature(&state, signature, &body) {
         return StatusCode::FORBIDDEN;
     };
+
+    info!(
+        "Received YouTube hub notification: {:?}",
+        from_utf8(body.as_ref())
+    );
 
     let feed: PushFeed = match serde_xml_rs::from_reader(body.as_ref()) {
         Ok(feed) => feed,

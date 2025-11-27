@@ -1,5 +1,6 @@
 use crate::error::BotResult;
 use crate::state::BotState;
+use crate::ui::color::UiColor;
 use crate::ui::embed::CreateEmbedExt;
 use neobabu_core::events::new_youtube_video::NewYoutubeVideo;
 use poise::futures_util::StreamExt;
@@ -25,6 +26,7 @@ pub async fn handle(ctx: &Context, state: &BotState, event: NewYoutubeVideo) -> 
         event.video_model.url()
     );
     let mut embed = CreateEmbed::default()
+        .ui_color(UiColor::Youtube)
         .description(description)
         .author(author)
         .url(event.video_model.url())

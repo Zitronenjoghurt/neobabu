@@ -12,6 +12,7 @@ pub mod events;
 pub mod games;
 pub mod integrations;
 pub mod jobs;
+pub mod rendering;
 pub mod services;
 pub mod stores;
 pub mod types;

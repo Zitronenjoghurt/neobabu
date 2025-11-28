@@ -20,6 +20,8 @@ target
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 /assets/
+/testing/
+core/assets
 docker/.env
 docker/bot-config.toml
 docker/bot-config.test.toml

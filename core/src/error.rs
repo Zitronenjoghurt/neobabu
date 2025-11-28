@@ -26,6 +26,8 @@ pub enum CoreError {
     GuildYoutubeChannelLimitReached,
     #[error("Hex error: {0}")]
     Hex(#[from] hex::FromHexError),
+    #[error("Image error: {0}")]
+    Image(#[from] image::ImageError),
     #[error("Invalid birthday: {0}")]
     InvalidBirthday(String),
     #[error("Invalid month: {0}")]
@@ -80,6 +82,7 @@ impl CoreError {
             | Self::Database(_)
             | Self::DecryptDataTooShort
             | Self::Hex(_)
+            | Self::Image(_)
             | Self::InvalidHeaderValue(_)
             | Self::InvalidMonth(_)
             | Self::MissingNasaApiKey

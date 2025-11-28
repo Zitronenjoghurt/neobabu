@@ -1,5 +1,8 @@
 use crate::state::ServerState;
 use axum::Router;
+use neobabu_core::rendering::o2d::object::{Object, Position, Visual};
+use neobabu_core::rendering::o2d::render::O2DRenderer;
+use neobabu_core::rendering::o2d::tileset::TilesetId;
 use std::net::{IpAddr, SocketAddr};
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::{error, info};
@@ -56,7 +59,7 @@ fn init_tracing() {
 }
 
 async fn proxy_to_vite(
-    axum::extract::State(state): axum::extract::State<ServerState>,
+    axum::extract::State(_state): axum::extract::State<ServerState>,
     req: axum::extract::Request,
 ) -> axum::response::Response {
     let vite_url = std::env::var("VITE_DEV_SERVER").unwrap();

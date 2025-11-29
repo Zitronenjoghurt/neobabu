@@ -1,8 +1,5 @@
 use crate::state::ServerState;
 use axum::Router;
-use neobabu_core::rendering::o2d::object::{Object, Position, Visual};
-use neobabu_core::rendering::o2d::render::O2DRenderer;
-use neobabu_core::rendering::o2d::tileset::TilesetId;
 use std::net::{IpAddr, SocketAddr};
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::{error, info};

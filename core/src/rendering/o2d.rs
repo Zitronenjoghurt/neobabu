@@ -4,8 +4,9 @@
 //! The main reason I gave it a name is to differentiate it from other rendering methods I might
 //! put into the rendering module in the future.
 
-pub mod atlas;
-pub mod object;
-pub mod render;
-pub mod sprite;
-pub mod tileset;
+mod atlas;
+mod object;
+pub mod prelude;
+mod render;
+mod sprite;
+mod tileset;

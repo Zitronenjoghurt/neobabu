@@ -17,6 +17,15 @@ impl Rect {
             height: size,
         }
     }
+
+    pub const fn from_tiled(x: u8, y: u8, width: u8, height: u8) -> Self {
+        Self {
+            x: x as u32 * width as u32,
+            y: y as u32 * height as u32,
+            width: width as u32,
+            height: height as u32,
+        }
+    }
 }
 
 pub struct Sprite {
@@ -28,20 +37,21 @@ pub struct Sprite {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum SpriteId {
+    Carrot5,
     UntilledSoil,
 }
 
 impl SpriteId {
-    pub fn get_sprite(&self) -> &'static Sprite {
+    pub fn get_sprite(&self) -> Sprite {
         match self {
-            Self::UntilledSoil => &Sprite {
+            Self::Carrot5 => Sprite {
+                atlas_id: AtlasId::FarmingObjects,
+                rect: Rect::from_tiled(4, 0, 16, 32),
+                y_sort_offset: 0,
+            },
+            Self::UntilledSoil => Sprite {
                 atlas_id: AtlasId::FarmingTileset,
-                rect: Rect {
-                    x: 160,
-                    y: 16,
-                    width: 16,
-                    height: 16,
-                },
+                rect: Rect::from_tiled(10, 1, 16, 16),
                 y_sort_offset: 0,
             },
         }

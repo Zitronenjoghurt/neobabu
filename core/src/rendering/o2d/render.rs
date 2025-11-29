@@ -1,17 +1,18 @@
 use crate::error::CoreResult;
 use crate::rendering::o2d::atlas::cache::AtlasCache;
-use crate::rendering::o2d::object;
-use crate::rendering::o2d::object::{Object, ObjectGrid};
+use crate::rendering::o2d::object::grid::O2DGrid;
+use crate::rendering::o2d::object::visual::VisualO2D;
+use crate::rendering::o2d::object::Object2D;
 use crate::rendering::o2d::sprite::Sprite;
 use image::{Pixel, RgbaImage};
 use std::sync::Arc;
 
 pub trait O2DRenderable {
-    fn to_objects(&self) -> Vec<Object>;
+    fn to_objects(&self) -> Vec<Object2D>;
 }
 
-impl O2DRenderable for Object {
-    fn to_objects(&self) -> Vec<Object> {
+impl O2DRenderable for Object2D {
+    fn to_objects(&self) -> Vec<Object2D> {
         vec![*self]
     }
 }
@@ -34,12 +35,12 @@ impl O2DRenderer {
         tile_width: u8,
         tile_size: u8,
     ) -> CoreResult<RgbaImage> {
-        let mut grid = object::ObjectGrid::from_objects(
+        let mut grid = O2DGrid::from_objects(
             renderables.iter().flat_map(|r| r.to_objects()).collect(),
             tile_height,
             tile_width,
         );
-        grid.y_sort();
+        grid.sort();
 
         let width = tile_width as u32 * tile_size as u32;
         let height = tile_height as u32 * tile_size as u32;
@@ -55,20 +56,67 @@ impl O2DRenderer {
         Ok(canvas)
     }
 
+    pub fn render_debug<R: O2DRenderable>(
+        &self,
+        renderables: &[R],
+        tile_height: u8,
+        tile_width: u8,
+        tile_size: u8,
+    ) -> CoreResult<RgbaImage> {
+        let mut canvas = self.render(renderables, tile_height, tile_width, tile_size)?;
+
+        let grid_color = image::Rgba([255, 255, 255, 50]);
+
+        for tile_x in 0..tile_width {
+            for tile_y in 0..tile_height {
+                let base_x = tile_x as u32 * tile_size as u32;
+                let base_y = tile_y as u32 * tile_size as u32;
+
+                for x in 0..tile_size as u32 {
+                    let pixel_x = base_x + x;
+                    if pixel_x < canvas.width() {
+                        if base_y < canvas.height() {
+                            canvas.get_pixel_mut(pixel_x, base_y).blend(&grid_color);
+                        }
+                        let bottom_y = base_y + tile_size as u32 - 1;
+                        if bottom_y < canvas.height() {
+                            canvas.get_pixel_mut(pixel_x, bottom_y).blend(&grid_color);
+                        }
+                    }
+                }
+
+                for y in 0..tile_size as u32 {
+                    let pixel_y = base_y + y;
+                    if pixel_y < canvas.height() {
+                        if base_x < canvas.width() {
+                            canvas.get_pixel_mut(base_x, pixel_y).blend(&grid_color);
+                        }
+                        let right_x = base_x + tile_size as u32 - 1;
+                        if right_x < canvas.width() {
+                            canvas.get_pixel_mut(right_x, pixel_y).blend(&grid_color);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(canvas)
+    }
+
     fn render_object(
         &self,
         canvas: &mut RgbaImage,
-        object: &Object,
-        grid: &ObjectGrid,
+        object: &Object2D,
+        grid: &O2DGrid,
         tile_size: u8,
     ) -> CoreResult<()> {
         match &object.visual {
-            object::Visual::Sprite(sprite_id) => {
+            VisualO2D::Sprite(sprite_id) => {
                 let sprite = sprite_id.get_sprite();
                 let pos = object.position.pixel_position(tile_size);
-                self.draw_sprite(canvas, &sprite, pos)?;
+                self.draw_sprite(canvas, &sprite, pos, tile_size)?;
             }
-            object::Visual::Tile(tileset_id) => {
+            VisualO2D::Tile(tileset_id) => {
                 let mask = grid.determine_tile_mask(
                     object.position.tile_x,
                     object.position.tile_y,
@@ -76,7 +124,7 @@ impl O2DRenderer {
                 );
                 let sprite = tileset_id.tile_set().get_sprite(mask);
                 let pos = object.position.pixel_position(tile_size);
-                self.draw_sprite(canvas, &sprite, pos)?;
+                self.draw_sprite(canvas, &sprite, pos, tile_size)?;
             }
         }
         Ok(())
@@ -87,8 +135,14 @@ impl O2DRenderer {
         canvas: &mut RgbaImage,
         sprite: &Sprite,
         pos: (u32, u32),
+        tile_size: u8,
     ) -> CoreResult<()> {
         let atlas = self.atlas_cache.get(sprite.atlas_id)?;
+
+        // Accounting for sprites higher than tile size
+        // This will ensure that the sprite is drawn at the expected position
+        // The bottom-left tile of the sprite will be its origin
+        let y_adjust = sprite.rect.height.saturating_sub(tile_size as u32);
 
         for y in 0..sprite.rect.height {
             for x in 0..sprite.rect.width {
@@ -97,11 +151,17 @@ impl O2DRenderer {
                 let dst_x = pos.0 + x;
                 let dst_y = pos.1 + y;
 
-                if dst_x < canvas.width() && dst_y < canvas.height() {
-                    if let Some(src_pixel) = atlas.get_pixel(src_x, src_y) {
-                        let dst_pixel = canvas.get_pixel_mut(dst_x, dst_y);
-                        dst_pixel.blend(src_pixel);
-                    }
+                let Some(adjusted_y) = dst_y.checked_sub(y_adjust) else {
+                    continue;
+                };
+
+                let Some(src_pixel) = atlas.get_pixel(src_x, src_y) else {
+                    continue;
+                };
+
+                if dst_x < canvas.width() && adjusted_y < canvas.height() {
+                    let dst_pixel = canvas.get_pixel_mut(dst_x, adjusted_y);
+                    dst_pixel.blend(src_pixel);
                 }
             }
         }

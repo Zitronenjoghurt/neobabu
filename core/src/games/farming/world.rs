@@ -5,8 +5,11 @@ use crate::games::farming::tile::FarmTile;
 use crate::rendering::o2d::prelude::{O2DRenderer, Object2D};
 use crate::types::cardinal::Cardinal;
 use image::RgbaImage;
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
 use strum::IntoEnumIterator;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FarmWorld {
     pub tiles: Vec<FarmTile>,
     pub height: u8,
@@ -33,6 +36,13 @@ impl FarmWorld {
             tiles,
             height,
             width,
+        }
+    }
+
+    pub fn update(&mut self, elapsed: Duration) {
+        self.compute();
+        for tile in &mut self.tiles {
+            tile.update(elapsed);
         }
     }
 
@@ -112,30 +122,44 @@ impl FarmWorld {
             .get_mut(x as usize + y as usize * self.width as usize)
     }
 
-    pub fn apply_at<F>(&mut self, x: u8, y: u8, mut f: F)
+    pub fn apply_at<F>(&mut self, x: u8, y: u8, f: F)
     where
-        F: FnMut(&mut FarmTile),
+        F: Fn(&mut FarmTile),
     {
         if let Some(tile) = self.get_tile_mut(x, y) {
             f(tile);
         }
     }
 
-    pub fn till_at(&mut self, x: u8, y: u8) {
-        self.apply_at(x, y, |tile| tile.ground.insert(GroundFlags::TILLED));
-    }
+    pub fn apply_at_range<F>(&mut self, min: (u8, u8), max: (u8, u8), mut f: F)
+    where
+        F: FnMut(&mut FarmTile),
+    {
+        if min.0 > max.0 || min.1 > max.1 {
+            return;
+        }
 
-    pub fn water_at(&mut self, x: u8, y: u8) {
-        self.apply_at(x, y, |tile| tile.ground.insert(GroundFlags::WATERED));
+        for x in min.0..=max.0 {
+            for y in min.1..=max.1 {
+                if let Some(tile) = self.get_tile_mut(x, y) {
+                    f(tile);
+                }
+            }
+        }
     }
 }
 
 // Computing tiles
 impl FarmWorld {
-    pub fn compute_and_validate(&mut self) {
+    pub fn compute(&mut self) {
         for x in 0..self.width {
             for y in 0..self.height {
                 self.compute_tile_cliffs(x, y);
+            }
+        }
+        for x in 0..self.width {
+            for y in 0..self.height {
+                self.compute_cliff_integrity(x, y);
             }
         }
         for x in 0..self.width {
@@ -145,7 +169,7 @@ impl FarmWorld {
         }
         for x in 0..self.width {
             for y in 0..self.height {
-                self.validate_tile(x, y);
+                self.compute_ground(x, y);
             }
         }
     }
@@ -164,6 +188,14 @@ impl FarmWorld {
             }
         }
         self.apply_at(x, y, |tile| tile.computed = flags.clone());
+    }
+
+    fn compute_cliff_integrity(&mut self, x: u8, y: u8) {
+        if let Some(tile) = self.get_tile_mut(x, y) {
+            if tile.computed.ground_around.count_cardinals() < 4 {
+                tile.clear_ground();
+            }
+        }
     }
 
     fn compute_tile_tillability(&mut self, x: u8, y: u8) {
@@ -191,26 +223,24 @@ impl FarmWorld {
         self.apply_at(x, y, |tile| tile.computed.is_tillable = is_tillable);
     }
 
-    fn validate_tile(&mut self, x: u8, y: u8) {
+    fn compute_ground(&mut self, x: u8, y: u8) {
         let Some(tile) = self.get_tile_mut(x, y) else {
             return;
         };
 
         if !tile.has_ground() {
             tile.ground = GroundFlags::empty();
-            return;
         }
 
         if !tile.computed.is_tillable {
             tile.ground.remove(GroundFlags::TILLED);
             tile.ground.remove(GroundFlags::WATERED);
-            return;
         }
 
         if tile.ground.is_tilled() {
             tile.ground.remove(GroundFlags::FOLIAGE);
-            return;
         } else {
+            tile.plant = None;
             tile.ground.remove(GroundFlags::WATERED);
         }
     }
@@ -223,7 +253,8 @@ impl FarmWorld {
         o2d: &O2DRenderer,
         debug: FarmWorldDebugOptions,
     ) -> CoreResult<RgbaImage> {
-        self.compute_and_validate();
+        self.compute();
+        self.compute();
 
         let mut objects = Vec::new();
         for x in 0..self.width {

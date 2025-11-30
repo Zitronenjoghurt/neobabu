@@ -85,4 +85,12 @@ impl CardinalFlags {
             || (self.contains(CardinalFlags::NORTH_WEST)
                 && other.contains(CardinalFlags::SOUTH_EAST))
     }
+
+    pub fn count_cardinals(&self) -> usize {
+        self.bits().count_ones() as usize
+    }
+
+    pub fn with_only_main(self) -> Self {
+        Self::from_bits_truncate(self.bits() & 0b1111)
+    }
 }

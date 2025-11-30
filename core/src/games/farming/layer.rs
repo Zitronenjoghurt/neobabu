@@ -5,6 +5,8 @@ pub enum FarmLayer {
     Water = 0,
     Ground = 1,
     OnGround = 2,
+    AboveGround = 3,
+    Object = 4,
     Overlay = 100,
 }
 

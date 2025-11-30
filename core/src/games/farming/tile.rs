@@ -1,10 +1,12 @@
 use crate::games::farming::layer::FarmLayer;
+use crate::games::farming::plant::{Plant, PlantId};
 use crate::games::farming::tile::computed::ComputedFlags;
 use crate::games::farming::tile::ground::GroundFlags;
 use crate::games::farming::world::FarmWorldDebugOptions;
 use crate::rendering::o2d::prelude::*;
 use image::Rgba;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 pub mod computed;
 pub mod ground;
@@ -12,11 +14,18 @@ pub mod ground;
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FarmTile {
     pub ground: GroundFlags,
+    pub plant: Option<Plant>,
     #[serde(skip, default)]
     pub computed: ComputedFlags,
 }
 
 impl FarmTile {
+    pub fn update(&mut self, elapsed: Duration) {
+        if let Some(plant) = &mut self.plant {
+            plant.grow_by(elapsed);
+        }
+    }
+
     pub fn has_ground(&self) -> bool {
         self.ground.has_ground()
     }
@@ -37,6 +46,14 @@ impl FarmTile {
         self.ground.insert(GroundFlags::WATERED);
     }
 
+    pub fn remove_foliage(&mut self) {
+        self.ground.remove(GroundFlags::FOLIAGE);
+    }
+
+    pub fn add_plant(&mut self, plant_id: PlantId) {
+        self.plant = Some(Plant::new(plant_id));
+    }
+
     pub fn render_objects(&self, x: u8, y: u8, debug: &FarmWorldDebugOptions) -> Vec<Object2D> {
         let mut objects = Vec::new();
 
@@ -52,6 +69,10 @@ impl FarmTile {
 
         if self.ground.is_tilled() {
             objects.extend(self.render_soil(x, y));
+        }
+
+        if let Some(plant) = &self.plant {
+            objects.extend(plant.render_objects(x, y, self.ground.is_watered()));
         }
 
         if debug.tillability && self.computed.is_tillable {

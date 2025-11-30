@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum TileMaskLayout {
     Blob,
+    ThreeByThree2x2Hole,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -26,19 +27,52 @@ impl TileMask {
     pub fn tile_position(&self, layout: TileMaskLayout) -> (u8, u8) {
         match layout {
             TileMaskLayout::Blob => self.blob_position(),
+            TileMaskLayout::ThreeByThree2x2Hole => self.three_by_three_2x2_hole_position(),
         }
     }
 
-    fn blob_position(&self) -> (u8, u8) {
-        let n = self.0 & 0b0001 != 0;
-        let e = self.0 & 0b0010 != 0;
-        let s = self.0 & 0b0100 != 0;
-        let w = self.0 & 0b1000 != 0;
+    pub fn has_north(&self) -> bool {
+        self.0 & 0b0001 != 0
+    }
 
-        let ne = self.0 & 0b0001_0000 != 0 && n && e;
-        let se = self.0 & 0b0010_0000 != 0 && s && e;
-        let sw = self.0 & 0b0100_0000 != 0 && s && w;
-        let nw = self.0 & 0b1000_0000 != 0 && n && w;
+    pub fn has_east(&self) -> bool {
+        self.0 & 0b0010 != 0
+    }
+
+    pub fn has_south(&self) -> bool {
+        self.0 & 0b0100 != 0
+    }
+
+    pub fn has_west(&self) -> bool {
+        self.0 & 0b1000 != 0
+    }
+
+    pub fn has_north_east(&self) -> bool {
+        self.0 & 0b0001_0000 != 0
+    }
+
+    pub fn has_south_east(&self) -> bool {
+        self.0 & 0b0010_0000 != 0
+    }
+
+    pub fn has_south_west(&self) -> bool {
+        self.0 & 0b0100_0000 != 0
+    }
+
+    pub fn has_north_west(&self) -> bool {
+        self.0 & 0b1000_0000 != 0
+    }
+
+    fn blob_position(&self) -> (u8, u8) {
+        let n = self.has_north();
+        let e = self.has_east();
+        let s = self.has_south();
+        let w = self.has_west();
+
+        let ne = self.has_north_east() && n && e;
+        let se = self.has_south_east() && s && e;
+        let sw = self.has_south_west() && s && w;
+        let nw = self.has_north_west() && n && w;
 
         match (n, e, s, w) {
             // Only center
@@ -151,6 +185,49 @@ impl TileMask {
                 (true, true, true, false) => (5, 1),
                 (true, true, true, true) => (9, 2),
             },
+        }
+    }
+
+    fn three_by_three_2x2_hole_position(&self) -> (u8, u8) {
+        let n = self.has_north();
+        let e = self.has_east();
+        let s = self.has_south();
+        let w = self.has_west();
+
+        match (n, e, s, w) {
+            (false, false, false, false) => (1, 1),
+            (false, false, false, true) => (2, 2),
+            (false, false, true, false) => (1, 0),
+            (false, false, true, true) => (2, 0),
+            (false, true, false, false) => (0, 2),
+            (false, true, false, true) => (1, 2),
+            (false, true, true, false) => (0, 0),
+            (false, true, true, true) => (1, 0),
+            (true, false, false, false) => (1, 2),
+            (true, false, false, true) => (2, 2),
+            (true, false, true, false) => (1, 1),
+            (true, false, true, true) => (2, 1),
+            (true, true, false, false) => (0, 2),
+            (true, true, false, true) => (1, 2),
+            (true, true, true, false) => (0, 1),
+            (true, true, true, true) => {
+                let ne = self.has_north_east();
+                let se = self.has_south_east();
+                let sw = self.has_south_west();
+                let nw = self.has_north_west();
+
+                if !ne {
+                    (3, 1)
+                } else if !se {
+                    (3, 0)
+                } else if !sw {
+                    (4, 0)
+                } else if !nw {
+                    (4, 1)
+                } else {
+                    (1, 1)
+                }
+            }
         }
     }
 }

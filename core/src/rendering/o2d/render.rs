@@ -111,6 +111,10 @@ impl O2DRenderer {
         tile_size: u8,
     ) -> CoreResult<()> {
         match &object.visual {
+            VisualO2D::Color(color) => {
+                let pos = object.position.pixel_position(tile_size);
+                self.draw_color(canvas, color, pos, tile_size);
+            }
             VisualO2D::Sprite(sprite_id) => {
                 let sprite = sprite_id.get_sprite();
                 let pos = object.position.pixel_position(tile_size);
@@ -122,12 +126,31 @@ impl O2DRenderer {
                     object.position.tile_y,
                     *tileset_id,
                 );
-                let sprite = tileset_id.tile_set().get_sprite(mask);
+                let sprite = tileset_id.get_sprite(mask);
                 let pos = object.position.pixel_position(tile_size);
                 self.draw_sprite(canvas, &sprite, pos, tile_size)?;
             }
         }
         Ok(())
+    }
+
+    fn draw_color(
+        &self,
+        canvas: &mut RgbaImage,
+        color: &image::Rgba<u8>,
+        pos: (u32, u32),
+        tile_size: u8,
+    ) {
+        for y in 0..tile_size as u32 {
+            for x in 0..tile_size as u32 {
+                let dst_x = pos.0 + x;
+                let dst_y = pos.1 + y;
+                if dst_x < canvas.width() && dst_y < canvas.height() {
+                    let dst_pixel = canvas.get_pixel_mut(dst_x, dst_y);
+                    dst_pixel.blend(color);
+                }
+            }
+        }
     }
 
     fn draw_sprite(

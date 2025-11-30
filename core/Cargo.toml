@@ -8,7 +8,7 @@ description = "The core library containing all of neobabu's main logic."
 migration = { path = "migration" }
 sea-orm = { version = "2.0.0-rc.16", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 base64 = "0.22.1"
-bitflags = "2.10.0"
+bitflags = { version = "2.10.0", features = ["serde"] }
 chacha20poly1305 = "0.11.0-rc.2"
 chrono = { workspace = true }
 futures = "0.3.31"
@@ -23,6 +23,7 @@ reqwest-retry = "0.7.0"
 reqwest-leaky-bucket = "0.4.0"
 serde = { workspace = true }
 serenity = "0.12.4"
+strum = "0.27.2"
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-cron-scheduler = "0.15.1"

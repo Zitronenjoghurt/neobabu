@@ -2488,6 +2488,7 @@ dependencies = [
  "sea-orm",
  "serde",
  "serenity",
+ "strum",
  "thiserror 2.0.17",
  "tokio",
  "tokio-cron-scheduler",

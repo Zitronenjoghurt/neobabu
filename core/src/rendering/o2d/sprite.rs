@@ -39,6 +39,7 @@ pub struct Sprite {
 pub enum SpriteId {
     Carrot5,
     UntilledSoil,
+    Water,
 }
 
 impl SpriteId {
@@ -52,6 +53,11 @@ impl SpriteId {
             Self::UntilledSoil => Sprite {
                 atlas_id: AtlasId::FarmingTileset,
                 rect: Rect::from_tiled(10, 1, 16, 16),
+                y_sort_offset: 0,
+            },
+            Self::Water => Sprite {
+                atlas_id: AtlasId::ExteriorTileset,
+                rect: Rect::from_tiled(10, 14, 16, 16),
                 y_sort_offset: 0,
             },
         }

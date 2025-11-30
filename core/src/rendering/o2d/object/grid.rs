@@ -61,51 +61,63 @@ impl O2DGrid {
         }
     }
 
+    pub fn has_connecting_tile_at(&self, tile_x: u8, tile_y: u8, tileset_id: TilesetId) -> bool {
+        let Some(objects) = self.get_at(tile_x, tile_y) else {
+            return false;
+        };
+        objects.iter().any(|object| {
+            let VisualO2D::Tile(other_tileset_id) = object.visual else {
+                return false;
+            };
+            other_tileset_id == tileset_id || tileset_id.connects_with(other_tileset_id)
+        })
+    }
+
     pub fn determine_tile_mask(&self, tile_x: u8, tile_y: u8, tileset_id: TilesetId) -> TileMask {
         let n = if tile_y > 0 {
-            self.has_tile_at(tile_x, tile_y - 1, tileset_id)
+            self.has_connecting_tile_at(tile_x, tile_y - 1, tileset_id)
         } else {
             false
         };
 
         let e = if tile_x < self.width - 1 {
-            self.has_tile_at(tile_x + 1, tile_y, tileset_id)
+            self.has_connecting_tile_at(tile_x + 1, tile_y, tileset_id)
         } else {
             false
         };
 
         let s = if tile_y < self.height - 1 {
-            self.has_tile_at(tile_x, tile_y + 1, tileset_id)
+            self.has_connecting_tile_at(tile_x, tile_y + 1, tileset_id)
         } else {
             false
         };
 
         let w = if tile_x > 0 {
-            self.has_tile_at(tile_x - 1, tile_y, tileset_id)
+            self.has_connecting_tile_at(tile_x - 1, tile_y, tileset_id)
         } else {
             false
         };
 
         let ne = if tile_x < self.width - 1 && tile_y > 0 {
-            self.has_tile_at(tile_x + 1, tile_y - 1, tileset_id)
+            self.has_connecting_tile_at(tile_x + 1, tile_y - 1, tileset_id)
         } else {
             false
         };
 
         let se = if tile_x < self.width - 1 && tile_y < self.height - 1 {
-            self.has_tile_at(tile_x + 1, tile_y + 1, tileset_id)
+            self.has_connecting_tile_at(tile_x + 1, tile_y + 1, tileset_id)
         } else {
             false
         };
 
         let sw = if tile_x > 0 && tile_y < self.height - 1 {
-            self.has_tile_at(tile_x - 1, tile_y + 1, tileset_id)
+            self.has_connecting_tile_at(tile_x - 1, tile_y + 1, tileset_id)
         } else {
             false
         };
 
         let nw = if tile_x > 0 && tile_y > 0 {
-            self.has_tile_at(tile_x - 1, tile_y - 1, tileset_id)
+            self.has_connecting_tile_at(tile_x - 1, tile_y - 1, tileset_id)
         } else {
             false
         };

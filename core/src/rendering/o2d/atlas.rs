@@ -18,6 +18,7 @@ impl Atlas {
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum AtlasId {
+    ExteriorTileset,
     FarmingIcons,
     FarmingObjects,
     FarmingTileset,
@@ -26,6 +27,7 @@ pub enum AtlasId {
 impl AtlasId {
     pub fn data(&self) -> &'static [u8] {
         match self {
+            Self::ExteriorTileset => include_bytes!("../../../assets/exterior_tileset.png"),
             Self::FarmingIcons => include_bytes!("../../../assets/farming_icons.png"),
             Self::FarmingObjects => include_bytes!("../../../assets/farming_objects.png"),
             Self::FarmingTileset => include_bytes!("../../../assets/farming_tileset.png"),

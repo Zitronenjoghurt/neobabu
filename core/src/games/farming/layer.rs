@@ -2,8 +2,10 @@ use crate::rendering::o2d::prelude::LayerO2D;
 
 #[derive(Debug, Copy, Clone)]
 pub enum FarmLayer {
-    Ground = 0,
-    OnGround = 1,
+    Water = 0,
+    Ground = 1,
+    OnGround = 2,
+    Overlay = 100,
 }
 
 impl LayerO2D for FarmLayer {

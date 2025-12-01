@@ -4,6 +4,7 @@ use std::time::Duration;
 pub mod hemisphere;
 pub mod layer;
 pub mod plant;
+pub mod procedural;
 pub mod season;
 pub mod tile;
 pub mod world;

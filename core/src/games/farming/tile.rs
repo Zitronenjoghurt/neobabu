@@ -183,19 +183,19 @@ impl FarmTile {
         if ctx.is_dangling_cliff() {
             new.clear_ground();
             new.plant = None;
-        }
+        } else {
+            if self.plant.is_some() && !is_tillable {
+                new.plant = None;
+            }
 
-        if self.plant.is_some() && !is_tillable {
-            new.plant = None;
-        }
+            if self.is_tilled() && !is_tillable {
+                new.ground.remove(GroundFlags::TILLED);
+                new.ground.remove(GroundFlags::WATERED);
+            }
 
-        if self.is_tilled() && !is_tillable {
-            new.ground.remove(GroundFlags::TILLED);
-            new.ground.remove(GroundFlags::WATERED);
-        }
-
-        if !is_tillable && self.has_ground() {
-            new.ground.insert(GroundFlags::FOLIAGE);
+            if !is_tillable && self.has_ground() {
+                new.ground.insert(GroundFlags::FOLIAGE);
+            }
         }
 
         if new != *self { Some(new) } else { None }

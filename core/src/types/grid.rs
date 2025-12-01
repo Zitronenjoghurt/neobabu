@@ -159,6 +159,10 @@ impl<T> Grid<T> {
         count
     }
 
+    pub fn into_iter(self) -> impl Iterator<Item = T> {
+        self.tiles.into_iter()
+    }
+
     pub fn iter_tiles(&self) -> impl Iterator<Item = &T> {
         self.tiles.iter()
     }
@@ -172,6 +176,14 @@ impl<T> Grid<T> {
                 (i / width) as u8,
             )
         })
+    }
+
+    pub fn iter_tiles_coords_mut(&mut self) -> impl Iterator<Item = (&mut T, u8, u8)> {
+        let width = self.width() as usize;
+        self.tiles
+            .iter_mut()
+            .enumerate()
+            .map(move |(i, tile)| (tile, (i % width) as u8, (i / width) as u8))
     }
 
     pub fn iter_tiles_mut(&mut self) -> impl Iterator<Item = &mut T> {

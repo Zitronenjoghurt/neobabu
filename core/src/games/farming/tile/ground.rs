@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
 
 bitflags! {
-    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+    #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
     pub struct GroundFlags: u8 {
         const GROUND = 0b0000_0001;
         const FOLIAGE = 0b0000_0010;

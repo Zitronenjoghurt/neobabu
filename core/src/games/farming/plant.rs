@@ -3,7 +3,7 @@ use crate::rendering::o2d::prelude::{Object2D, PositionO2D, SpriteId, VisualO2D}
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Plant {
     pub id: PlantId,
     pub age: Duration,

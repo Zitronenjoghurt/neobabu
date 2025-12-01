@@ -1,247 +1,97 @@
 use crate::error::CoreResult;
-use crate::games::farming::tile::computed::ComputedFlags;
-use crate::games::farming::tile::ground::GroundFlags;
-use crate::games::farming::tile::FarmTile;
-use crate::rendering::o2d::prelude::{O2DRenderer, Object2D};
-use crate::types::cardinal::Cardinal;
+use crate::games::farming::tile::{FarmTile, TileContext};
+use crate::rendering::o2d::prelude::O2DRenderer;
+use crate::types::grid::cardinal::Cardinal;
+use crate::types::grid::Grid;
 use image::RgbaImage;
 use serde::{Deserialize, Serialize};
+use std::collections::{HashSet, VecDeque};
 use std::time::Duration;
 use strum::IntoEnumIterator;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FarmWorld {
-    pub tiles: Vec<FarmTile>,
-    pub height: u8,
-    pub width: u8,
+    pub grid: Grid<FarmTile>,
 }
 
 impl FarmWorld {
-    pub fn new_empty(width: u8, height: u8) -> Self {
+    pub fn new_square_island(width: u8, height: u8) -> Self {
         let mut tiles = Vec::with_capacity(width as usize * height as usize);
-        let mut land_tile = FarmTile::default();
-        land_tile
-            .ground
-            .insert(GroundFlags::GROUND | GroundFlags::FOLIAGE);
         for x in 0..width {
             for y in 0..height {
                 if x == 0 || y == 0 || x == width - 1 || y == height - 1 {
                     tiles.push(FarmTile::default())
                 } else {
-                    tiles.push(land_tile.clone());
+                    tiles.push(FarmTile::new_land());
                 }
             }
         }
         Self {
-            tiles,
-            height,
-            width,
+            grid: Grid::new(tiles, width, height),
+        }
+    }
+
+    pub fn new_random(width: u8, height: u8, water_chance: f32) -> Self {
+        let mut tiles = Vec::with_capacity(width as usize * height as usize);
+        for _ in 0..width {
+            for _ in 0..height {
+                if rand::random::<f32>() < water_chance {
+                    tiles.push(FarmTile::default())
+                } else {
+                    tiles.push(FarmTile::new_land());
+                }
+            }
+        }
+        Self {
+            grid: Grid::new(tiles, width, height),
         }
     }
 
     pub fn update(&mut self, elapsed: Duration) {
-        self.compute();
-        for tile in &mut self.tiles {
+        self.validate();
+        for tile in &mut self.grid.iter_tiles_mut() {
             tile.update(elapsed);
-        }
-    }
-
-    pub fn get_tile(&self, x: u8, y: u8) -> Option<&FarmTile> {
-        self.tiles
-            .get(x as usize + y as usize * self.width as usize)
-    }
-
-    pub fn get_neighbor_tile(&self, cardinal: Cardinal, x: u8, y: u8) -> Option<&FarmTile> {
-        self.get_neighbor_coordinates(cardinal, x, y)
-            .and_then(|coord| self.get_tile(coord.0, coord.1))
-    }
-
-    pub fn get_neighbor_coordinates(&self, cardinal: Cardinal, x: u8, y: u8) -> Option<(u8, u8)> {
-        match cardinal {
-            Cardinal::North => {
-                if y == 0 {
-                    None
-                } else {
-                    Some((x, y - 1))
-                }
-            }
-            Cardinal::East => {
-                if x >= self.width - 1 {
-                    None
-                } else {
-                    Some((x + 1, y))
-                }
-            }
-            Cardinal::South => {
-                if y >= self.height - 1 {
-                    None
-                } else {
-                    Some((x, y + 1))
-                }
-            }
-            Cardinal::West => {
-                if x == 0 {
-                    None
-                } else {
-                    Some((x - 1, y))
-                }
-            }
-            Cardinal::NorthEast => {
-                if x >= self.width - 1 || y == 0 {
-                    None
-                } else {
-                    Some((x + 1, y - 1))
-                }
-            }
-            Cardinal::SouthEast => {
-                if x >= self.width - 1 || y >= self.height - 1 {
-                    None
-                } else {
-                    Some((x + 1, y + 1))
-                }
-            }
-            Cardinal::SouthWest => {
-                if x == 0 || y >= self.height - 1 {
-                    None
-                } else {
-                    Some((x - 1, y + 1))
-                }
-            }
-            Cardinal::NorthWest => {
-                if x == 0 || y == 0 {
-                    None
-                } else {
-                    Some((x - 1, y - 1))
-                }
-            }
-        }
-    }
-
-    pub fn get_tile_mut(&mut self, x: u8, y: u8) -> Option<&mut FarmTile> {
-        self.tiles
-            .get_mut(x as usize + y as usize * self.width as usize)
-    }
-
-    pub fn apply_at<F>(&mut self, x: u8, y: u8, f: F)
-    where
-        F: Fn(&mut FarmTile),
-    {
-        if let Some(tile) = self.get_tile_mut(x, y) {
-            f(tile);
-        }
-    }
-
-    pub fn apply_at_range<F>(&mut self, min: (u8, u8), max: (u8, u8), mut f: F)
-    where
-        F: FnMut(&mut FarmTile),
-    {
-        if min.0 > max.0 || min.1 > max.1 {
-            return;
-        }
-
-        for x in min.0..=max.0 {
-            for y in min.1..=max.1 {
-                if let Some(tile) = self.get_tile_mut(x, y) {
-                    f(tile);
-                }
-            }
         }
     }
 }
 
 // Computing tiles
 impl FarmWorld {
-    pub fn compute(&mut self) {
-        for x in 0..self.width {
-            for y in 0..self.height {
-                self.compute_tile_cliffs(x, y);
-            }
-        }
-        for x in 0..self.width {
-            for y in 0..self.height {
-                self.compute_cliff_integrity(x, y);
-            }
-        }
-        for x in 0..self.width {
-            for y in 0..self.height {
-                self.compute_tile_tillability(x, y);
-            }
-        }
-        for x in 0..self.width {
-            for y in 0..self.height {
-                self.compute_ground(x, y);
-            }
-        }
-    }
+    pub fn validate(&mut self) {
+        let mut visited = HashSet::new();
+        let mut queue: VecDeque<(u8, u8)> = VecDeque::new();
 
-    fn compute_tile_cliffs(&mut self, x: u8, y: u8) {
-        let mut flags = ComputedFlags::default();
-        for cardinal in Cardinal::iter() {
-            let Some(tile) = self.get_neighbor_tile(cardinal, x, y) else {
+        for x in 0..self.grid.width() {
+            for y in 0..self.grid.height() {
+                queue.push_back((x, y));
+            }
+        }
+
+        while let Some((x, y)) = queue.pop_front() {
+            if !visited.insert((x, y)) {
                 continue;
+            }
+
+            let new_tile = {
+                let ctx = TileContext {
+                    grid: &self.grid,
+                    debug: &Default::default(),
+                    x,
+                    y,
+                };
+                self.grid.get_tile(x, y).and_then(|t| t.validate(ctx))
             };
-            if tile.has_ground() {
-                flags.ground_around.set_cardinal(cardinal)
+
+            if let Some(tile) = new_tile {
+                *self.grid.get_tile_mut(x, y).unwrap() = tile;
+
+                for cardinal in Cardinal::iter() {
+                    if let Some((nx, ny)) = self.grid.get_neighbor_coordinates(cardinal, x, y) {
+                        visited.remove(&(nx, ny));
+                        queue.push_back((nx, ny));
+                    }
+                }
             }
-            if tile.is_tilled() {
-                flags.tilled_around.set_cardinal(cardinal)
-            }
-        }
-        self.apply_at(x, y, |tile| tile.computed = flags.clone());
-    }
-
-    fn compute_cliff_integrity(&mut self, x: u8, y: u8) {
-        if let Some(tile) = self.get_tile_mut(x, y) {
-            if tile.computed.ground_around.count_cardinals() < 4 {
-                tile.clear_ground();
-            }
-        }
-    }
-
-    fn compute_tile_tillability(&mut self, x: u8, y: u8) {
-        let mut is_tillable = true;
-        for cardinal in Cardinal::iter() {
-            let Some(tile) = self.get_tile(x, y) else {
-                continue;
-            };
-            if !tile.has_ground() {
-                is_tillable = false;
-                break;
-            }
-
-            let Some(first_coords) = self.get_neighbor_coordinates(cardinal, x, y) else {
-                continue;
-            };
-            let Some(first_tile) = self.get_tile(first_coords.0, first_coords.1) else {
-                continue;
-            };
-            if first_tile.computed.is_cliff() || !first_tile.has_ground() {
-                is_tillable = false;
-                break;
-            }
-        }
-        self.apply_at(x, y, |tile| tile.computed.is_tillable = is_tillable);
-    }
-
-    fn compute_ground(&mut self, x: u8, y: u8) {
-        let Some(tile) = self.get_tile_mut(x, y) else {
-            return;
-        };
-
-        if !tile.has_ground() {
-            tile.ground = GroundFlags::empty();
-        }
-
-        if !tile.computed.is_tillable {
-            tile.ground.remove(GroundFlags::TILLED);
-            tile.ground.remove(GroundFlags::WATERED);
-        }
-
-        if tile.ground.is_tilled() {
-            tile.ground.remove(GroundFlags::FOLIAGE);
-        } else {
-            tile.plant = None;
-            tile.ground.remove(GroundFlags::WATERED);
         }
     }
 }
@@ -253,28 +103,24 @@ impl FarmWorld {
         o2d: &O2DRenderer,
         debug: FarmWorldDebugOptions,
     ) -> CoreResult<RgbaImage> {
-        self.compute();
-        self.compute();
+        self.validate();
 
         let mut objects = Vec::new();
-        for x in 0..self.width {
-            for y in 0..self.height {
-                objects.extend(self.render_tile(x, y, &debug));
-            }
+        for (tile, x, y) in self.grid.iter_tiles_coords() {
+            let ctx = TileContext {
+                grid: &self.grid,
+                debug: &debug,
+                x,
+                y,
+            };
+            objects.extend(tile.render_objects(ctx))
         }
 
         if debug.grid {
-            o2d.render_debug(&objects, self.height, self.width, 16)
+            o2d.render_debug(&objects, self.grid.height(), self.grid.width(), 16)
         } else {
-            o2d.render(&objects, self.height, self.width, 16)
+            o2d.render(&objects, self.grid.height(), self.grid.width(), 16)
         }
-    }
-
-    fn render_tile(&self, x: u8, y: u8, debug: &FarmWorldDebugOptions) -> Vec<Object2D> {
-        let Some(tile) = self.get_tile(x, y) else {
-            return vec![];
-        };
-        tile.render_objects(x, y, &debug)
     }
 }
 
@@ -282,4 +128,6 @@ impl FarmWorld {
 pub struct FarmWorldDebugOptions {
     pub grid: bool,
     pub tillability: bool,
+    pub is_cliff: bool,
+    pub has_ground: bool,
 }

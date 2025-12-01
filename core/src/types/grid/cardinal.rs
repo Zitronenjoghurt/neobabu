@@ -13,6 +13,25 @@ pub enum Cardinal {
     NorthWest,
 }
 
+impl Cardinal {
+    pub fn iter_main() -> impl Iterator<Item = Self> {
+        [Self::North, Self::East, Self::South, Self::West]
+            .iter()
+            .copied()
+    }
+
+    pub fn iter_diagonals() -> impl Iterator<Item = Self> {
+        [
+            Self::NorthEast,
+            Self::SouthEast,
+            Self::SouthWest,
+            Self::NorthWest,
+        ]
+        .iter()
+        .copied()
+    }
+}
+
 bitflags! {
     #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
     pub struct CardinalFlags: u8 {

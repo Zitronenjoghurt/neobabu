@@ -1,9 +1,11 @@
 use crate::error::CoreResult;
+use crate::games::farming::day_night::day_night_color;
 use crate::games::farming::hemisphere::Hemisphere;
 use crate::games::farming::tile::{FarmTile, TileContext};
-use crate::rendering::o2d::prelude::O2DRenderer;
+use crate::rendering::o2d::prelude::{O2DRenderer, Object2D};
 use crate::types::grid::cardinal::Cardinal;
 use crate::types::grid::Grid;
+use chrono_tz::Tz;
 use image::RgbaImage;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
@@ -14,10 +16,11 @@ use strum::IntoEnumIterator;
 pub struct FarmWorld {
     pub grid: Grid<FarmTile>,
     pub hemisphere: Hemisphere,
+    pub tz: Tz,
 }
 
 impl FarmWorld {
-    pub fn new_square_island(width: u8, height: u8, hemisphere: Hemisphere) -> Self {
+    pub fn new_square_island(width: u8, height: u8, hemisphere: Hemisphere, tz: Tz) -> Self {
         let mut tiles = Vec::with_capacity(width as usize * height as usize);
         for x in 0..width {
             for y in 0..height {
@@ -31,10 +34,17 @@ impl FarmWorld {
         Self {
             grid: Grid::new(tiles, width, height),
             hemisphere,
+            tz,
         }
     }
 
-    pub fn new_random(width: u8, height: u8, water_chance: f32, hemisphere: Hemisphere) -> Self {
+    pub fn new_random(
+        width: u8,
+        height: u8,
+        water_chance: f32,
+        hemisphere: Hemisphere,
+        tz: Tz,
+    ) -> Self {
         let mut tiles = Vec::with_capacity(width as usize * height as usize);
         for _ in 0..width {
             for _ in 0..height {
@@ -48,6 +58,7 @@ impl FarmWorld {
         Self {
             grid: Grid::new(tiles, width, height),
             hemisphere,
+            tz,
         }
     }
 
@@ -121,6 +132,8 @@ impl FarmWorld {
             };
             objects.extend(tile.render_objects(ctx))
         }
+
+        objects.push(Object2D::filter(day_night_color(self.tz)));
 
         if debug.grid {
             o2d.render_debug(&objects, self.grid.height(), self.grid.width(), 16)

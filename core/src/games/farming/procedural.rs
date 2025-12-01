@@ -3,6 +3,7 @@ use crate::games::farming::procedural::tile::ProceduralTile;
 use crate::games::farming::tile::FarmTile;
 use crate::games::farming::world::FarmWorld;
 use crate::types::grid::Grid;
+use chrono_tz::Tz;
 use noise::{NoiseFn, Perlin};
 
 mod tile;
@@ -11,6 +12,7 @@ pub struct ProceduralWorld {
     pub height: u8,
     pub width: u8,
     pub hemisphere: Hemisphere,
+    pub tz: Tz,
     pub seed: u32,
     pub scale: f64,
     pub threshold: f64,
@@ -43,6 +45,7 @@ impl ProceduralWorld {
         FarmWorld {
             grid: Grid::new(farm_tiles, self.width, self.height),
             hemisphere: self.hemisphere,
+            tz: self.tz,
         }
     }
 

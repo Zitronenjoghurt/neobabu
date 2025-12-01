@@ -1,3 +1,4 @@
+pub mod color_gradient;
 pub mod feature;
 pub mod grid;
 pub mod user_guild_info;

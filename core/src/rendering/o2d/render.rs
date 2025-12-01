@@ -35,11 +35,13 @@ impl O2DRenderer {
         tile_width: u8,
         tile_size: u8,
     ) -> CoreResult<RgbaImage> {
-        let mut grid = O2DGrid::from_objects(
-            renderables.iter().flat_map(|r| r.to_objects()).collect(),
-            tile_height,
-            tile_width,
-        );
+        let all_objects: Vec<Object2D> = renderables.iter().flat_map(|r| r.to_objects()).collect();
+
+        let (effects, geometry): (Vec<_>, Vec<_>) = all_objects
+            .into_iter()
+            .partition(|obj| obj.visual.is_effect());
+
+        let mut grid = O2DGrid::from_objects(geometry, tile_height, tile_width);
         grid.sort();
 
         let width = tile_width as u32 * tile_size as u32;
@@ -51,6 +53,10 @@ impl O2DRenderer {
 
         for object in object_refs {
             self.render_object(&mut canvas, object, &grid, tile_size)?;
+        }
+
+        for effect in effects {
+            self.render_object(&mut canvas, &effect, &grid, tile_size)?;
         }
 
         Ok(canvas)
@@ -115,6 +121,9 @@ impl O2DRenderer {
                 let pos = object.position.pixel_position(tile_size);
                 self.draw_color(canvas, color, pos, tile_size);
             }
+            VisualO2D::Filter(color) => {
+                self.blend_all(canvas, color);
+            }
             VisualO2D::Sprite(sprite_id) => {
                 let sprite = sprite_id.get_sprite();
                 let pos = object.position.pixel_position(tile_size);
@@ -150,6 +159,12 @@ impl O2DRenderer {
                     dst_pixel.blend(color);
                 }
             }
+        }
+    }
+
+    fn blend_all(&self, canvas: &mut RgbaImage, color: &image::Rgba<u8>) {
+        for pixel in canvas.pixels_mut() {
+            pixel.blend(color);
         }
     }
 

@@ -11,3 +11,12 @@ pub struct Object2D {
     pub visual: VisualO2D,
     pub position: PositionO2D,
 }
+
+impl Object2D {
+    pub fn filter(color: image::Rgba<u8>) -> Self {
+        Self {
+            visual: VisualO2D::Filter(color),
+            position: PositionO2D::default(),
+        }
+    }
+}

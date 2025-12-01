@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
+pub mod day_night;
 pub mod hemisphere;
 pub mod layer;
 pub mod plant;

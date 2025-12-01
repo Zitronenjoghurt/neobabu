@@ -1,5 +1,6 @@
 use crate::games::farming::layer::FarmLayer;
 use crate::games::farming::plant::{Plant, PlantId};
+use crate::games::farming::season::Season;
 use crate::games::farming::tile::ground::GroundFlags;
 use crate::games::farming::world::FarmWorldDebugOptions;
 use crate::rendering::o2d::prelude::*;
@@ -127,15 +128,27 @@ impl FarmTile {
     fn render_foliage(&self, ctx: &TileContext) -> Object2D {
         if ctx.is_cliff() {
             let position = PositionO2D::from_tile_xy_layer(ctx.x, ctx.y, FarmLayer::Ground);
+            let tileset = match ctx.season {
+                Season::Spring => TilesetId::RockSpring,
+                Season::Summer => TilesetId::RockSummer,
+                Season::Autumn => TilesetId::RockAutumn,
+                Season::Winter => TilesetId::RockWinter,
+            };
             Object2D {
                 position,
-                visual: VisualO2D::Tile(TilesetId::RockSpring),
+                visual: VisualO2D::Tile(tileset),
             }
         } else {
             let position = PositionO2D::from_tile_xy_layer(ctx.x, ctx.y, FarmLayer::OnGround);
+            let tileset = match ctx.season {
+                Season::Spring => TilesetId::FoliageSpring,
+                Season::Summer => TilesetId::FoliageSummer,
+                Season::Autumn => TilesetId::FoliageAutumn,
+                Season::Winter => TilesetId::FoliageWinter,
+            };
             Object2D {
                 position,
-                visual: VisualO2D::Tile(TilesetId::FoliageSpring),
+                visual: VisualO2D::Tile(tileset),
             }
         }
     }
@@ -194,6 +207,7 @@ pub struct TileContext<'a> {
     pub debug: &'a FarmWorldDebugOptions,
     pub x: u8,
     pub y: u8,
+    pub season: Season,
 }
 
 impl TileContext<'_> {
@@ -309,12 +323,7 @@ impl TileContext<'_> {
             let Some((x, y)) = self.grid.get_neighbor_coordinates(cardinal, self.x, self.y) else {
                 continue;
             };
-            if f(&TileContext {
-                grid: self.grid,
-                debug: self.debug,
-                x,
-                y,
-            }) {
+            if f(&TileContext { x, y, ..*self }) {
                 count += 1;
             }
         }
@@ -327,12 +336,7 @@ impl TileContext<'_> {
                 return false;
             };
 
-            if !f(&TileContext {
-                grid: self.grid,
-                debug: self.debug,
-                x,
-                y,
-            }) {
+            if !f(&TileContext { x, y, ..*self }) {
                 return false;
             }
         }
@@ -345,12 +349,7 @@ impl TileContext<'_> {
                 continue;
             };
 
-            if f(&TileContext {
-                grid: self.grid,
-                debug: self.debug,
-                x,
-                y,
-            }) {
+            if f(&TileContext { x, y, ..*self }) {
                 return true;
             }
         }

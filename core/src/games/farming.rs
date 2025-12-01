@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
+pub mod hemisphere;
 pub mod layer;
 pub mod plant;
+pub mod season;
 pub mod tile;
 pub mod world;
 

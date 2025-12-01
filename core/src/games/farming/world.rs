@@ -1,4 +1,5 @@
 use crate::error::CoreResult;
+use crate::games::farming::hemisphere::Hemisphere;
 use crate::games::farming::tile::{FarmTile, TileContext};
 use crate::rendering::o2d::prelude::O2DRenderer;
 use crate::types::grid::cardinal::Cardinal;
@@ -12,10 +13,11 @@ use strum::IntoEnumIterator;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FarmWorld {
     pub grid: Grid<FarmTile>,
+    pub hemisphere: Hemisphere,
 }
 
 impl FarmWorld {
-    pub fn new_square_island(width: u8, height: u8) -> Self {
+    pub fn new_square_island(width: u8, height: u8, hemisphere: Hemisphere) -> Self {
         let mut tiles = Vec::with_capacity(width as usize * height as usize);
         for x in 0..width {
             for y in 0..height {
@@ -28,10 +30,11 @@ impl FarmWorld {
         }
         Self {
             grid: Grid::new(tiles, width, height),
+            hemisphere,
         }
     }
 
-    pub fn new_random(width: u8, height: u8, water_chance: f32) -> Self {
+    pub fn new_random(width: u8, height: u8, water_chance: f32, hemisphere: Hemisphere) -> Self {
         let mut tiles = Vec::with_capacity(width as usize * height as usize);
         for _ in 0..width {
             for _ in 0..height {
@@ -44,6 +47,7 @@ impl FarmWorld {
         }
         Self {
             grid: Grid::new(tiles, width, height),
+            hemisphere,
         }
     }
 
@@ -78,6 +82,7 @@ impl FarmWorld {
                     debug: &Default::default(),
                     x,
                     y,
+                    season: self.hemisphere.current_season(),
                 };
                 self.grid.get_tile(x, y).and_then(|t| t.validate(ctx))
             };
@@ -112,6 +117,7 @@ impl FarmWorld {
                 debug: &debug,
                 x,
                 y,
+                season: self.hemisphere.current_season(),
             };
             objects.extend(tile.render_objects(ctx))
         }

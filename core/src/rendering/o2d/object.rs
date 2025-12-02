@@ -13,9 +13,9 @@ pub struct Object2D {
 }
 
 impl Object2D {
-    pub fn filter(color: image::Rgba<u8>) -> Self {
+    pub fn ambience(color: image::Rgba<u8>) -> Self {
         Self {
-            visual: VisualO2D::Filter(color),
+            visual: VisualO2D::Ambience(color),
             position: PositionO2D::default(),
         }
     }

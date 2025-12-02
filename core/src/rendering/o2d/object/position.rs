@@ -33,6 +33,11 @@ impl PositionO2D {
         (x as u32, y as u32)
     }
 
+    pub fn pixel_center(&self, tile_size: u8) -> (u32, u32) {
+        let (px, py) = self.pixel_position(tile_size);
+        (px + tile_size as u32 / 2, py + tile_size as u32 / 2)
+    }
+
     pub fn with_layer(self, layer: impl LayerO2D) -> Self {
         Self {
             z_index: layer.get_z_index(),

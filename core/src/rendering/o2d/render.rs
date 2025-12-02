@@ -55,8 +55,18 @@ impl O2DRenderer {
             self.render_object(&mut canvas, object, &grid, tile_size)?;
         }
 
-        for effect in effects {
-            self.render_object(&mut canvas, &effect, &grid, tile_size)?;
+        let ambience_color = effects.iter().find_map(|o| match o.visual {
+            VisualO2D::Ambience(color) => Some(color),
+            _ => None,
+        });
+
+        let point_lights: Vec<&Object2D> = effects
+            .iter()
+            .filter(|obj| matches!(obj.visual, VisualO2D::PointLight { .. }))
+            .collect();
+
+        if let Some(ambience_color) = ambience_color {
+            self.apply_lighting(&mut canvas, &ambience_color, &point_lights, tile_size);
         }
 
         Ok(canvas)
@@ -121,9 +131,6 @@ impl O2DRenderer {
                 let pos = object.position.pixel_position(tile_size);
                 self.draw_color(canvas, color, pos, tile_size);
             }
-            VisualO2D::Filter(color) => {
-                self.blend_all(canvas, color);
-            }
             VisualO2D::Sprite(sprite_id) => {
                 let sprite = sprite_id.get_sprite();
                 let pos = object.position.pixel_position(tile_size);
@@ -139,6 +146,7 @@ impl O2DRenderer {
                 let pos = object.position.pixel_position(tile_size);
                 self.draw_sprite(canvas, &sprite, pos, tile_size)?;
             }
+            _ => {}
         }
         Ok(())
     }
@@ -159,12 +167,6 @@ impl O2DRenderer {
                     dst_pixel.blend(color);
                 }
             }
-        }
-    }
-
-    fn blend_all(&self, canvas: &mut RgbaImage, color: &image::Rgba<u8>) {
-        for pixel in canvas.pixels_mut() {
-            pixel.blend(color);
         }
     }
 
@@ -206,4 +208,70 @@ impl O2DRenderer {
 
         Ok(())
     }
+
+    fn apply_lighting(
+        &self,
+        canvas: &mut RgbaImage,
+        ambience_color: &image::Rgba<u8>,
+        lights: &[&Object2D],
+        tile_size: u8,
+    ) {
+        let width = canvas.width();
+        let height = canvas.height();
+
+        let mut lightmap = RgbaImage::from_pixel(width, height, *ambience_color);
+
+        for light_object in lights {
+            let VisualO2D::PointLight(light) = &light_object.visual else {
+                continue;
+            };
+
+            let (center_x, center_y) = light_object.position.pixel_center(tile_size);
+
+            let radius_int = light.radius.ceil() as u32;
+            let min_x = center_x.saturating_sub(radius_int);
+            let max_x = (center_x + radius_int).min(width);
+            let min_y = center_y.saturating_sub(radius_int);
+            let max_y = (center_y + radius_int).min(height);
+
+            for y in min_y..max_y {
+                for x in min_x..max_x {
+                    let dx = x as f32 - center_x as f32;
+                    let dy = y as f32 - center_y as f32;
+
+                    let dist_sq = dx * dx + dy * dy;
+                    if dist_sq > light.radius * light.radius {
+                        continue;
+                    }
+
+                    let distance = dist_sq.sqrt();
+
+                    let normalized_dist = distance / light.radius;
+                    let falloff = (1.0 - normalized_dist).powi(2);
+
+                    let brightness = falloff * light.intensity;
+
+                    let pixel = lightmap.get_pixel_mut(x, y);
+
+                    let r = lerp(pixel[0], light.color[0], brightness);
+                    let g = lerp(pixel[1], light.color[1], brightness);
+                    let b = lerp(pixel[2], light.color[2], brightness);
+                    let a = lerp(pixel[3], light.color[3], brightness);
+
+                    *pixel = image::Rgba([r, g, b, a]);
+                }
+            }
+        }
+
+        for (x, y, pixel) in lightmap.enumerate_pixels() {
+            canvas.get_pixel_mut(x, y).blend(pixel);
+        }
+    }
+}
+
+fn lerp(start: u8, end: u8, t: f32) -> u8 {
+    let start_f = start as f32;
+    let end_f = end as f32;
+    let t_clamped = t.clamp(0.0, 1.0);
+    (start_f + (end_f - start_f) * t_clamped) as u8
 }

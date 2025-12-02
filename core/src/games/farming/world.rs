@@ -133,7 +133,7 @@ impl FarmWorld {
             objects.extend(tile.render_objects(ctx))
         }
 
-        objects.push(Object2D::filter(day_night_color(self.tz)));
+        objects.push(Object2D::ambience(day_night_color(self.tz)));
 
         if debug.grid {
             o2d.render_debug(&objects, self.grid.height(), self.grid.width(), 16)

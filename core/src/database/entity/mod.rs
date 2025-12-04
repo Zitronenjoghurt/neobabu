@@ -9,6 +9,7 @@ pub mod guild_apod;
 pub mod guild_birthday;
 pub mod guild_youtube;
 pub mod guild_youtube_channel;
+pub mod inventory_item;
 pub mod rps_games;
 pub mod rps_user;
 pub mod user;

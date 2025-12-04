@@ -11,6 +11,7 @@ pub mod error;
 pub mod events;
 pub mod games;
 pub mod integrations;
+pub mod inventory;
 pub mod jobs;
 pub mod rendering;
 pub mod services;

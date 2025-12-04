@@ -72,6 +72,7 @@ impl FarmWorld {
 
 // Computing tiles
 impl FarmWorld {
+    #[tracing::instrument(level = "trace", skip_all)]
     pub fn validate(&mut self) {
         let mut visited = HashSet::new();
         let mut queue: VecDeque<(u8, u8)> = VecDeque::new();
@@ -114,6 +115,7 @@ impl FarmWorld {
 
 // Rendering
 impl FarmWorld {
+    #[tracing::instrument(level = "trace", skip_all)]
     pub fn render(
         &mut self,
         o2d: &O2DRenderer,

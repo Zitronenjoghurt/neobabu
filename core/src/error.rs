@@ -34,6 +34,8 @@ pub enum CoreError {
     InvalidMonth(u32),
     #[error("Invalid header value: {0}")]
     InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
+    #[error("Json ser/de error: {0}")]
+    JsonSerde(#[from] serde_json::Error),
     #[error("Missing NASA API key")]
     MissingNasaApiKey,
     #[error("Missing Youtube API key")]
@@ -48,6 +50,8 @@ pub enum CoreError {
     Serenity(#[from] serenity::Error),
     #[error("Unauthorized")]
     Unauthorized,
+    #[error("Unknown item kind: {0}")]
+    UnknownItemKind(i32),
     #[error("Failed to parse URL: {0}")]
     UrlParse(#[from] url::ParseError),
     #[error("User youtube channel limit reached")]
@@ -85,12 +89,14 @@ impl CoreError {
             | Self::Image(_)
             | Self::InvalidHeaderValue(_)
             | Self::InvalidMonth(_)
+            | Self::JsonSerde(_)
             | Self::MissingNasaApiKey
             | Self::MissingYoutubeApiKey
             | Self::Os(_)
             | Self::Reqwest(_)
             | Self::ReqwestMiddleware(_)
             | Self::Serenity(_)
+            | Self::UnknownItemKind(_)
             | Self::UrlParse(_)
             | Self::Utf8(_)
             | Self::YoutubeHubCallbackUrlMissing

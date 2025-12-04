@@ -28,6 +28,7 @@ impl O2DRenderer {
         }))
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     pub fn render<R: O2DRenderable>(
         &self,
         renderables: &[R],
@@ -72,6 +73,7 @@ impl O2DRenderer {
         Ok(canvas)
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     pub fn render_debug<R: O2DRenderable>(
         &self,
         renderables: &[R],

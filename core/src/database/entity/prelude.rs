@@ -7,6 +7,7 @@ pub use super::guild_apod::Entity as GuildApod;
 pub use super::guild_birthday::Entity as GuildBirthday;
 pub use super::guild_youtube::Entity as GuildYoutube;
 pub use super::guild_youtube_channel::Entity as GuildYoutubeChannel;
+pub use super::inventory_item::Entity as InventoryItem;
 pub use super::rps_games::Entity as RpsGames;
 pub use super::rps_user::Entity as RpsUser;
 pub use super::user::Entity as User;

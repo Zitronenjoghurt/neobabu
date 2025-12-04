@@ -19,6 +19,7 @@ pub struct ProceduralWorld {
 }
 
 impl ProceduralWorld {
+    #[tracing::instrument(level = "trace", skip_all)]
     pub fn generate(&self) -> FarmWorld {
         let tiles = vec![ProceduralTile::default(); self.width as usize * self.height as usize];
         let mut grid = Grid::new(tiles, self.width, self.height);

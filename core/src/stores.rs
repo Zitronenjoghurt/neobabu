@@ -10,6 +10,7 @@ pub mod guild_apod;
 pub mod guild_birthday;
 pub mod guild_youtube;
 pub mod guild_youtube_channel;
+pub mod inventory_item;
 pub mod rps_games;
 pub mod rps_user;
 pub mod user;
@@ -26,6 +27,7 @@ pub struct Stores {
     pub guild_birthday: Arc<guild_birthday::GuildBirthdayStore>,
     pub guild_youtube: Arc<guild_youtube::GuildYoutubeStore>,
     pub guild_youtube_channel: Arc<guild_youtube_channel::GuildYoutubeChannelStore>,
+    pub item: Arc<inventory_item::InventoryItemStore>,
     pub rps_games: Arc<rps_games::RPSGamesStore>,
     pub rps_user: Arc<rps_user::RPSUserStore>,
     pub user: Arc<user::UserStore>,
@@ -45,6 +47,7 @@ impl Stores {
             guild_birthday: guild_birthday::GuildBirthdayStore::initialize(db),
             guild_youtube: guild_youtube::GuildYoutubeStore::initialize(db),
             guild_youtube_channel: guild_youtube_channel::GuildYoutubeChannelStore::initialize(db),
+            item: inventory_item::InventoryItemStore::initialize(db),
             rps_games: rps_games::RPSGamesStore::initialize(db),
             rps_user: rps_user::RPSUserStore::initialize(db),
             user: user::UserStore::initialize(db),

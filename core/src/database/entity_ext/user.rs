@@ -13,7 +13,6 @@ impl user::Model {
     pub fn timezone(&self) -> Option<chrono_tz::Tz> {
         self.preferred_timezone
             .as_ref()
-            .map(|tz_string| tz_string.parse().ok())
-            .flatten()
+            .and_then(|tz_string| tz_string.parse().ok())
     }
 }

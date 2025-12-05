@@ -167,7 +167,7 @@ impl YoutubeService {
 
         self.stores
             .guild_youtube_channel
-            .add(guild, &channel, user)
+            .add(guild, channel, user)
             .await?;
 
         Ok(())

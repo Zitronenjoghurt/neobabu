@@ -48,7 +48,7 @@ impl NeobabuCore {
     }
 
     pub async fn start_jobs(&self) -> CoreResult<()> {
-        let scheduler = jobs::Scheduler::new(&self).await?;
+        let scheduler = jobs::Scheduler::new(self).await?;
 
         tokio::spawn(async move {
             if let Err(err) = scheduler.start().await {

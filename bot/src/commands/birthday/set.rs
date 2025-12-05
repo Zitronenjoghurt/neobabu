@@ -27,7 +27,7 @@ pub async fn set(
     ctx.defer_ephemeral().await?;
 
     let mut embed = CreateEmbed::default()
-        .warning_user(&ctx.author())
+        .warning_user(ctx.author())
         .title("Do you want to set your birthday?")
         .description("Your birthday will be set globally and may be **announced** on servers you have interacted with (where this bot is on).\n\nYou will **not** be able to change it again for a while. If you did not specify your birth year the bot will not announce your age.\n\n**Are you sure you want to proceed?**")
         .field("Day", day.to_string(), true)
@@ -71,7 +71,7 @@ impl AcceptRowTrait for BirthdaySetRow {
 
         Ok(InteractiveEmbedResponse::halt_with(
             CreateEmbed::default()
-                .success_user(&context.author())
+                .success_user(context.author())
                 .title("Birthday set")
                 .description("Your birthday was set successfully."),
         ))
@@ -85,7 +85,7 @@ impl AcceptRowTrait for BirthdaySetRow {
         Ok(InteractiveEmbedResponse::halt_with(
             CreateEmbed::default()
                 .ui_color(UiColor::Gray)
-                .user(&context.author())
+                .user(context.author())
                 .title("Birthday not set")
                 .description("Your birthday was not set."),
         ))

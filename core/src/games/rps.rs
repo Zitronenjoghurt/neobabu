@@ -42,12 +42,12 @@ impl RPSGame {
             return RPSState::Draw;
         };
 
-        let is_user_1_winner = match (choice_1, choice_2) {
-            (RPSChoice::Rock, RPSChoice::Scissors) => true,
-            (RPSChoice::Paper, RPSChoice::Rock) => true,
-            (RPSChoice::Scissors, RPSChoice::Paper) => true,
-            _ => false,
-        };
+        let is_user_1_winner = matches!(
+            (choice_1, choice_2),
+            (RPSChoice::Rock, RPSChoice::Scissors)
+                | (RPSChoice::Paper, RPSChoice::Rock)
+                | (RPSChoice::Scissors, RPSChoice::Paper)
+        );
 
         if is_user_1_winner {
             RPSState::Winner1

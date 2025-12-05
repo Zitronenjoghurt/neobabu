@@ -69,9 +69,9 @@ pub async fn admin(
         .field("Role", format_role(role_id), false);
 
     let embed = if updated {
-        embed.success_user(&ctx.author())
+        embed.success_user(ctx.author())
     } else {
-        embed.ui_color(UiColor::Gray).user(&ctx.author())
+        embed.ui_color(UiColor::Gray).user(ctx.author())
     };
 
     ctx.send(embed.create_reply().ephemeral(true)).await?;

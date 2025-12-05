@@ -27,7 +27,7 @@ impl UserStore {
         };
 
         let new_user = user::ActiveModel {
-            id: Set(id.into()),
+            id: Set(id),
             ..Default::default()
         };
         Ok(new_user.insert(self.db.conn()).await?)

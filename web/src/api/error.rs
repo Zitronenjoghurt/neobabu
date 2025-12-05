@@ -8,7 +8,7 @@ pub type ApiResult<T> = Result<T, ApiError>;
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
     #[error("CSRF error: {0}")]
-    CSRF(#[from] axum_csrf::CsrfError),
+    Csrf(#[from] axum_csrf::CsrfError),
     #[error("Core error: {0}")]
     Core(#[from] neobabu_core::error::CoreError),
     #[error("Invalid CSRF token")]
@@ -39,7 +39,7 @@ impl ApiError {
                     StatusCode::INTERNAL_SERVER_ERROR
                 }
             }
-            Self::CSRF(_)
+            Self::Csrf(_)
             | Self::Reqwest(_)
             | Self::Server(_)
             | Self::Session(_)
@@ -54,7 +54,7 @@ impl ApiError {
     pub fn should_log(&self) -> bool {
         match self {
             Self::Core(err) => !err.is_user_error(),
-            Self::CSRF(_) | Self::Reqwest(_) | Self::Server(_) | Self::Session(_) => true,
+            Self::Csrf(_) | Self::Reqwest(_) | Self::Server(_) | Self::Session(_) => true,
             Self::InvalidCsrfToken
             | Self::MissingCsrfToken
             | Self::MissingPkceVerifier
@@ -72,7 +72,7 @@ impl ApiError {
                     "An unexpected error occurred.".to_string()
                 }
             }
-            Self::CSRF(_) => "Unexpected server-side CSRF error".to_string(),
+            Self::Csrf(_) => "Unexpected server-side CSRF error".to_string(),
             Self::Server(_) => "Internal server error".to_string(),
             Self::InvalidCsrfToken | Self::MissingCsrfToken | Self::MissingPkceVerifier => {
                 "Invalid CSRF token".to_string()

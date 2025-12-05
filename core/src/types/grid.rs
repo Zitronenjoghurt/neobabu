@@ -131,7 +131,7 @@ impl<T> Grid<T> {
     }
 
     pub fn check_neighbor(&self, cardinal: Cardinal, x: u8, y: u8, f: impl Fn(&T) -> bool) -> bool {
-        self.get_neighbor_tile(cardinal, x, y).map_or(false, f)
+        self.get_neighbor_tile(cardinal, x, y).is_some_and(f)
     }
 
     pub fn check_all_neighbors(&self, x: u8, y: u8, f: impl Fn(&T) -> bool) -> bool {
@@ -150,10 +150,10 @@ impl<T> Grid<T> {
     pub fn count_main_neighbors_with(&self, x: u8, y: u8, f: impl Fn(&T) -> bool) -> usize {
         let mut count = 0;
         for cardinal in Cardinal::iter_main() {
-            if let Some(tile) = self.get_neighbor_tile(cardinal, x, y) {
-                if f(tile) {
-                    count += 1;
-                }
+            if let Some(tile) = self.get_neighbor_tile(cardinal, x, y)
+                && f(tile)
+            {
+                count += 1;
             }
         }
         count

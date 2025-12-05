@@ -36,7 +36,7 @@ impl O2DGrid {
 
     pub fn add_object(&mut self, object: Object2D) {
         let key = (object.position.tile_x, object.position.tile_y);
-        self.grid.entry(key).or_insert_with(Vec::new).push(object);
+        self.grid.entry(key).or_default().push(object);
     }
 
     pub fn get_at(&self, tile_x: u8, tile_y: u8) -> Option<&[Object2D]> {

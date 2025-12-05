@@ -57,7 +57,7 @@ impl CreateEmbedExt for CreateEmbed {
     }
 
     async fn member_color(self, ctx: &Context, member: &Member) -> Self {
-        let color = member.colour(&ctx).unwrap_or(Colour::LIGHT_GREY);
+        let color = member.colour(ctx).unwrap_or(Colour::LIGHT_GREY);
         self.color(color)
     }
 

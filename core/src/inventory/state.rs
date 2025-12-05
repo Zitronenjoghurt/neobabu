@@ -39,11 +39,15 @@ impl ItemState {
     }
 
     pub fn add(&mut self, count: u64) {
-        self.quantity.map(|mut quantity| quantity.add(count));
+        if let Some(quantity) = &mut self.quantity {
+            quantity.add(count);
+        }
     }
 
-    pub fn with_count(self, count: u64) -> Self {
-        self.quantity.map(|mut quantity| quantity.count = count);
+    pub fn with_count(mut self, count: u64) -> Self {
+        if let Some(quantity) = &mut self.quantity {
+            quantity.count = count;
+        }
         self
     }
 }

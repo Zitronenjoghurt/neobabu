@@ -35,6 +35,6 @@ impl AtlasId {
     }
 
     pub fn load(&self) -> CoreResult<Atlas> {
-        Ok(Atlas::load(self.data())?)
+        Atlas::load(self.data())
     }
 }

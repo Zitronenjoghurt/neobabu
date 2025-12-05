@@ -43,7 +43,7 @@ pub async fn admin(
         };
 
         CreateEmbed::default()
-            .success_user(&ctx.author())
+            .success_user(ctx.author())
             .title("Birthday Settings Updated")
             .field(
                 "Enabled",
@@ -60,7 +60,7 @@ pub async fn admin(
 
         CreateEmbed::default()
             .ui_color(UiColor::Gray)
-            .user(&ctx.author())
+            .user(ctx.author())
             .title("Birthday Settings")
             .field(
                 "Enabled",

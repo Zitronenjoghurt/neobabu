@@ -9,6 +9,25 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
+                    .table(Farming::Table)
+                    .if_not_exists()
+                    .col(string(Farming::UserId).primary_key())
+                    .col(big_integer(Farming::StoryFlags).default(0))
+                    .col(timestamp(Farming::CreatedAt).default(Expr::current_timestamp()))
+                    .col(timestamp(Farming::UpdatedAt).default(Expr::current_timestamp()))
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(Farming::Table, Farming::UserId)
+                            .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .create_table(
+                Table::create()
                     .table(FarmingWorld::Table)
                     .if_not_exists()
                     .col(string(FarmingWorld::UserId))
@@ -29,13 +48,21 @@ impl MigrationTrait for Migration {
                     )
                     .to_owned(),
             )
-            .await
+            .await?;
+
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
+            .drop_table(Table::drop().table(Farming::Table).to_owned())
+            .await?;
+
+        manager
             .drop_table(Table::drop().table(FarmingWorld::Table).to_owned())
-            .await
+            .await?;
+
+        Ok(())
     }
 }
 
@@ -43,6 +70,15 @@ impl MigrationTrait for Migration {
 enum User {
     Table,
     Id,
+}
+
+#[derive(DeriveIden)]
+enum Farming {
+    Table,
+    UserId,
+    StoryFlags,
+    CreatedAt,
+    UpdatedAt,
 }
 
 #[derive(DeriveIden)]

@@ -10,6 +10,7 @@ pub enum TileMaskLayout {
 pub struct TileMask(u8);
 
 impl TileMask {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(n: bool, e: bool, s: bool, w: bool, ne: bool, se: bool, sw: bool, nw: bool) -> Self {
         let mask = (n as u8)
             | (e as u8) << 1

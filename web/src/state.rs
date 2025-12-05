@@ -8,6 +8,7 @@ use std::sync::Arc;
 use tracing::info;
 
 #[derive(Clone)]
+#[allow(clippy::type_complexity)]
 pub struct ServerState {
     pub config: Arc<ServerConfig>,
     pub core: Arc<NeobabuCore>,

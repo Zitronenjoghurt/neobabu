@@ -26,7 +26,7 @@ impl GuildStore {
         };
 
         let new = guild::ActiveModel {
-            id: Set(id.into()),
+            id: Set(id),
             ..Default::default()
         };
         Ok(new.insert(self.db.conn()).await?)

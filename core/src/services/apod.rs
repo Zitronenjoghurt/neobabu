@@ -43,7 +43,7 @@ impl ApodService {
     }
 
     async fn save_apod_if_not_exists(&self, apod: &NasaApod) -> CoreResult<apod::Model> {
-        let active_model = Self::model_from_api(&apod)?;
+        let active_model = Self::model_from_api(apod)?;
         let day = *active_model.day.as_ref();
         let month = *active_model.month.as_ref();
         let year = *active_model.year.as_ref();

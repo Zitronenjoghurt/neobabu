@@ -52,7 +52,7 @@ async fn get_callback(
         .into_active_model();
     let oauth_token = state
         .oauth_cryptor
-        .encrypt(&token_response.access_token().secret())?;
+        .encrypt(token_response.access_token().secret())?;
     user.encrypted_oauth_token = Set(Some(oauth_token));
     user.username = Set(Some(discord_user.name.to_string()));
     user.avatar_hash = Set(discord_user.avatar.map(|avatar| avatar.to_string()));

@@ -21,7 +21,7 @@ impl BirthdayService {
     }
 
     pub fn validate_birthday(&self, day: i16, month: i16, year: Option<i16>) -> CoreResult<()> {
-        if day < 1 || day > 31 || month < 1 || month > 12 {
+        if !(1..=31).contains(&day) || !(1..=12).contains(&month) {
             return Err(CoreError::invalid_birthday("Day or month out of range."));
         }
 
@@ -40,16 +40,11 @@ impl BirthdayService {
 
     pub fn can_update(&self, model: &user_birthday::Model) -> bool {
         let now = chrono::Utc::now();
-        if model
+        model
             .updated_at
             .and_utc()
             .add(Duration::hours(BIRTHDAY_UPDATE_TIMEOUT_HOURS))
-            > now
-        {
-            false
-        } else {
-            true
-        }
+            <= now
     }
 
     pub async fn set_birthday(

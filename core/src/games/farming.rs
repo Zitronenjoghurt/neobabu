@@ -16,12 +16,18 @@ pub struct FarmingGame {
     pub last_update: chrono::DateTime<chrono::Utc>,
 }
 
-impl FarmingGame {
-    pub fn new() -> Self {
+impl Default for FarmingGame {
+    fn default() -> Self {
         Self {
             worlds: vec![],
             last_update: chrono::Utc::now(),
         }
+    }
+}
+
+impl FarmingGame {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn update(&mut self) {

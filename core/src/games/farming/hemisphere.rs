@@ -13,11 +13,11 @@ impl Hemisphere {
         let now = chrono::Utc::now();
         let month = now.month();
 
-        let season = if month >= 3 && month <= 5 {
+        let season = if (3..=5).contains(&month) {
             Season::Spring
-        } else if month >= 6 && month <= 8 {
+        } else if (6..=8).contains(&month) {
             Season::Summer
-        } else if month >= 9 && month <= 11 {
+        } else if (9..=11).contains(&month) {
             Season::Autumn
         } else {
             Season::Winter

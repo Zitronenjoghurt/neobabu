@@ -17,7 +17,7 @@ pub mod rendering;
 pub mod services;
 pub mod stores;
 pub mod types;
-mod utils;
+pub mod utils;
 
 #[derive(Clone)]
 pub struct NeobabuCore {

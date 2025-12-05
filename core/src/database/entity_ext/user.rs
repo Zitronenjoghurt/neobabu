@@ -9,4 +9,11 @@ impl user::Model {
     pub fn has_permissions(&self, permissions: UserPermissions) -> bool {
         self.permissions().has_permissions(permissions)
     }
+
+    pub fn timezone(&self) -> Option<chrono_tz::Tz> {
+        self.preferred_timezone
+            .as_ref()
+            .map(|tz_string| tz_string.parse().ok())
+            .flatten()
+    }
 }

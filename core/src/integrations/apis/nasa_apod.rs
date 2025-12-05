@@ -1,7 +1,7 @@
 use crate::error::CoreResult;
 use crate::integrations::client::IntegrationClient;
 use crate::integrations::request::RequestBuilder;
-use crate::utils::year_month_min_max_day;
+use crate::utils::dates::year_month_min_max_day;
 use chrono::Datelike;
 use std::time::Duration;
 

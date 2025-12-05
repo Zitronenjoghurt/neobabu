@@ -1,5 +1,6 @@
 debug
 target
+testing
 .idea/
 /assets/
 web/dashboard/node_modules

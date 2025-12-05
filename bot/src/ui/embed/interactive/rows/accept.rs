@@ -18,7 +18,7 @@ where
 }
 
 #[async_trait::async_trait]
-pub trait AcceptRowTrait {
+pub trait AcceptRowTrait: Sized {
     async fn accept(
         &self,
         context: &Context<'_>,
@@ -36,6 +36,10 @@ pub trait AcceptRowTrait {
 
     fn deny_text(&self) -> &'static str {
         "Deny"
+    }
+
+    fn build(self) -> AcceptRow<Self> {
+        AcceptRow(self)
     }
 }
 

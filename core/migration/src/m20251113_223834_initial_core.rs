@@ -16,6 +16,7 @@ impl MigrationTrait for Migration {
                     .col(string_null(User::AvatarHash).default(Expr::null()))
                     .col(string_null(User::EncryptedOauthToken).default(Expr::null()))
                     .col(big_integer(User::Permissions).default(0_u64 as i64))
+                    .col(string_null(User::PreferredTimezone).default(Expr::null()))
                     .col(timestamp(User::CreatedAt).default(Expr::current_timestamp()))
                     .col(timestamp(User::UpdatedAt).default(Expr::current_timestamp()))
                     .to_owned(),
@@ -92,6 +93,7 @@ enum User {
     AvatarHash,
     EncryptedOauthToken,
     Permissions,
+    PreferredTimezone,
     CreatedAt,
     UpdatedAt,
 }

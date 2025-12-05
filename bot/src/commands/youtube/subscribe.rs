@@ -2,7 +2,7 @@ use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
 use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
-use crate::ui::embed::interactive::rows::accept::{AcceptRow, AcceptRowTrait};
+use crate::ui::embed::interactive::rows::accept::AcceptRowTrait;
 use crate::ui::embed::interactive::InteractiveEmbed;
 use crate::ui::embed::CreateEmbedExt;
 use crate::Context;
@@ -56,7 +56,7 @@ pub async fn subscribe(
         .title("New channel subscription")
         .description(format!("Do you want to subscribe to this channel?\n\nDouble check this is the correct channel before proceeding:\n{channel_url}"));
     InteractiveEmbed::new(&ctx, embed)
-        .row(AcceptRow(row))
+        .row(row.build())
         .timeout(std::time::Duration::from_secs(120))
         .run()
         .await?;

@@ -32,7 +32,7 @@ where
 }
 
 #[async_trait::async_trait]
-pub trait PaginationRowTrait {
+pub trait PaginationRowTrait: Sized {
     fn get_page(&self) -> usize;
     fn set_page(&mut self, page: usize);
     fn max_pages(&self) -> usize;
@@ -82,6 +82,10 @@ pub trait PaginationRowTrait {
 
     fn double_page_count(&self) -> usize {
         self.max_pages() / 5 + 1
+    }
+
+    fn build(self) -> PaginationRow<Self> {
+        PaginationRow(self)
     }
 }
 

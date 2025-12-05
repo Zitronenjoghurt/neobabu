@@ -1,7 +1,7 @@
 use crate::database::entity::{user, user_birthday};
 use crate::error::{CoreError, CoreResult};
 use crate::stores::Stores;
-use crate::utils::upcoming_date_time;
+use crate::utils::dates::upcoming_date_time;
 use chrono::Duration;
 use sea_orm::{IntoActiveModel, Set};
 use std::ops::Add;

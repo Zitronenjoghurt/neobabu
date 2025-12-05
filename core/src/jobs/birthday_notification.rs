@@ -2,7 +2,7 @@ use crate::database::entity::user_birthday;
 use crate::error::{CoreError, CoreResult};
 use crate::events::birthday_notification::BirthdayNotification;
 use crate::events::CoreEvent;
-use crate::utils::upcoming_date_time;
+use crate::utils::dates::upcoming_date_time;
 use crate::NeobabuCore;
 use chrono::{DateTime, Datelike};
 use futures::StreamExt;

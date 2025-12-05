@@ -4,6 +4,7 @@ pub mod prelude;
 
 pub mod apod;
 pub mod dashboard_session;
+pub mod farming_world;
 pub mod guild;
 pub mod guild_apod;
 pub mod guild_birthday;

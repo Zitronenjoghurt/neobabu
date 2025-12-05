@@ -11,12 +11,15 @@ pub struct Model {
     pub avatar_hash: Option<String>,
     pub encrypted_oauth_token: Option<String>,
     pub permissions: i64,
+    pub preferred_timezone: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_many = "super::farming_world::Entity")]
+    FarmingWorld,
     #[sea_orm(has_many = "super::inventory_item::Entity")]
     InventoryItem,
     #[sea_orm(has_one = "super::rps_user::Entity")]
@@ -25,6 +28,12 @@ pub enum Relation {
     UserBirthday,
     #[sea_orm(has_many = "super::user_guild::Entity")]
     UserGuild,
+}
+
+impl Related<super::farming_world::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::FarmingWorld.def()
+    }
 }
 
 impl Related<super::inventory_item::Entity> for Entity {

@@ -2,6 +2,7 @@
 
 pub use super::apod::Entity as Apod;
 pub use super::dashboard_session::Entity as DashboardSession;
+pub use super::farming_world::Entity as FarmingWorld;
 pub use super::guild::Entity as Guild;
 pub use super::guild_apod::Entity as GuildApod;
 pub use super::guild_birthday::Entity as GuildBirthday;

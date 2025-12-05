@@ -1,7 +1,7 @@
 use crate::context::ContextExt;
 use crate::error::{BotError, BotResult};
 use crate::ui::color::UiColor;
-use crate::ui::embed::interactive::rows::pagination::{PaginationRow, PaginationRowTrait};
+use crate::ui::embed::interactive::rows::pagination::PaginationRowTrait;
 use crate::ui::embed::interactive::InteractiveEmbed;
 use crate::ui::embed::CreateEmbedExt;
 use crate::ui::time::format_time_relative_at;
@@ -37,7 +37,7 @@ pub async fn upcoming(ctx: Context<'_>) -> BotResult<()> {
     let first_page = row.render_current_page(&ctx).await?;
     InteractiveEmbed::new(&ctx, first_page)
         .timeout(Duration::from_secs(300))
-        .row(PaginationRow(row))
+        .row(row.build())
         .run()
         .await?;
 

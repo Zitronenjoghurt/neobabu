@@ -17,6 +17,10 @@ pub enum BotError {
     Env(#[from] std::env::VarError),
     #[error("This command can only be used in a guild.")]
     GuildCommandOnly,
+    #[error(
+        "Invalid timezone, please use a valid timezone from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.\n\nIf you have no clue, this website might help: https://webbrowsertools.com/timezone/"
+    )]
+    InvalidTimezone(#[from] chrono_tz::ParseError),
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     #[error("Parse int error: {0}")]
@@ -37,7 +41,10 @@ impl BotError {
     pub fn is_user_error(&self) -> bool {
         match self {
             Self::Core(error) => error.is_user_error(),
-            Self::GuildCommandOnly | Self::TargetBotOrYourself | Self::TargetYourself => true,
+            Self::GuildCommandOnly
+            | Self::InvalidTimezone(_)
+            | Self::TargetBotOrYourself
+            | Self::TargetYourself => true,
             Self::Env(_)
             | Self::Io(_)
             | Self::Reqwest(_)

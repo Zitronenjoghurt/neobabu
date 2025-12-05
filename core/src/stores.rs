@@ -5,6 +5,8 @@ pub use sea_orm::{IntoActiveModel, Set};
 
 pub mod apod;
 pub mod dashboard_session;
+pub mod farming;
+pub mod farming_world;
 pub mod guild;
 pub mod guild_apod;
 pub mod guild_birthday;
@@ -22,6 +24,8 @@ pub mod youtube_video;
 pub struct Stores {
     pub apod: Arc<apod::ApodStore>,
     pub dashboard_session: Arc<dashboard_session::DashboardSessionStore>,
+    pub farming: Arc<farming::FarmingStore>,
+    pub farming_world: Arc<farming_world::FarmingWorldStore>,
     pub guild: Arc<guild::GuildStore>,
     pub guild_apod: Arc<guild_apod::GuildApodStore>,
     pub guild_birthday: Arc<guild_birthday::GuildBirthdayStore>,
@@ -42,6 +46,8 @@ impl Stores {
         Arc::new(Self {
             apod: apod::ApodStore::initialize(db),
             dashboard_session: dashboard_session::DashboardSessionStore::initialize(db),
+            farming: farming::FarmingStore::initialize(db),
+            farming_world: farming_world::FarmingWorldStore::initialize(db),
             guild: guild::GuildStore::initialize(db),
             guild_apod: guild_apod::GuildApodStore::initialize(db),
             guild_birthday: guild_birthday::GuildBirthdayStore::initialize(db),

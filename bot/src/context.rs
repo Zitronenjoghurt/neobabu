@@ -3,6 +3,7 @@ use crate::state::BotState;
 use crate::ui::emoji::EmojiType;
 use crate::Context;
 use neobabu_core::database::entity::{guild, user};
+use neobabu_core::rendering::o2d::prelude::O2DRenderer;
 use neobabu_core::services::Services;
 use neobabu_core::stores::Stores;
 use poise::serenity_prelude::ReactionType;
@@ -42,6 +43,10 @@ pub trait ContextExt {
             return Err(BotError::GuildCommandOnly);
         };
         Ok(self.stores().guild.fetch_or_create(guild_id).await?)
+    }
+
+    fn o2d(&self) -> &O2DRenderer {
+        &self.state().o2d
     }
 }
 

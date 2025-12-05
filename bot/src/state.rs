@@ -2,6 +2,7 @@ use crate::config::BotConfig;
 use crate::error::BotResult;
 use crate::ui::emoji::EmojiType;
 use neobabu_core::config::Config;
+use neobabu_core::rendering::o2d::prelude::O2DRenderer;
 use neobabu_core::NeobabuCore;
 use poise::serenity_prelude::{EmojiId, ReactionType};
 use std::sync::Arc;
@@ -11,6 +12,7 @@ use tracing::info;
 pub struct BotState {
     pub config: Arc<BotConfig>,
     pub core: Arc<NeobabuCore>,
+    pub o2d: O2DRenderer,
 }
 
 impl BotState {
@@ -32,6 +34,7 @@ impl BotState {
         let state = Self {
             config: Arc::new(config),
             core: Arc::new(core),
+            o2d: O2DRenderer::initialize()?,
         };
 
         info!("Bot state initialized");

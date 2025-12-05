@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 mod apod;
 mod birthday;
+mod farming;
 mod rock_paper_scissors;
 mod user;
 mod youtube;
@@ -11,6 +12,7 @@ mod youtube;
 pub struct Services {
     pub apod: Arc<apod::ApodService>,
     pub birthday: Arc<birthday::BirthdayService>,
+    pub farming: Arc<farming::FarmingService>,
     pub rps: Arc<rock_paper_scissors::RockPaperScissorsService>,
     pub user: Arc<user::UserService>,
     pub youtube: Arc<youtube::YoutubeService>,
@@ -21,6 +23,7 @@ impl Services {
         Arc::new(Self {
             apod: apod::ApodService::initialize(apis, stores),
             birthday: birthday::BirthdayService::initialize(stores),
+            farming: farming::FarmingService::initialize(stores),
             rps: rock_paper_scissors::RockPaperScissorsService::initialize(stores),
             user: user::UserService::initialize(stores),
             youtube: youtube::YoutubeService::initialize(apis, stores),

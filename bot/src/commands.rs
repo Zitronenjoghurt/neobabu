@@ -3,6 +3,7 @@ use crate::state::BotState;
 use poise::Command;
 
 mod birthday;
+mod farm;
 mod game;
 mod ping;
 mod settings;
@@ -14,6 +15,7 @@ pub fn get_commands() -> Vec<Command<BotState, BotError>> {
         ping::ping(),
         game::game(),
         birthday::birthday(),
+        farm::farm(),
         settings::settings(),
         space::space(),
         youtube::youtube(),

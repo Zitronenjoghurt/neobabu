@@ -18,6 +18,8 @@ pub enum CoreError {
     Database(#[from] sea_orm::DbErr),
     #[error("Decrypt data too short")]
     DecryptDataTooShort,
+    #[error("Farming world limit reached ({0})")]
+    FarmingWorldMaximumReached(u64),
     #[error("Feature not enabled on server: {0:?}")]
     FeatureNotEnabled(Feature),
     #[error("Youtube channel already subscribed on this server")]
@@ -34,12 +36,16 @@ pub enum CoreError {
     InvalidMonth(u32),
     #[error("Invalid header value: {0}")]
     InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
+    #[error("Invalid timezone: {0}")]
+    InvalidTimezone(#[from] chrono_tz::ParseError),
     #[error("Json ser/de error: {0}")]
     JsonSerde(#[from] serde_json::Error),
     #[error("Missing NASA API key")]
     MissingNasaApiKey,
     #[error("Missing Youtube API key")]
     MissingYoutubeApiKey,
+    #[error("No preferred timezone set")]
+    NoPreferredTimezone,
     #[error("OS error: {0}")]
     Os(#[from] rand::rand_core::OsError),
     #[error("Reqwest error: {0}")]
@@ -72,10 +78,13 @@ impl CoreError {
     pub fn is_user_error(&self) -> bool {
         match self {
             Self::BirthdayTimeout
+            | Self::FarmingWorldMaximumReached(_)
             | Self::FeatureNotEnabled(_)
             | Self::GuildYoutubeChannelAlreadySubscribed
             | Self::GuildYoutubeChannelLimitReached
             | Self::InvalidBirthday(_)
+            | Self::InvalidTimezone(_)
+            | Self::NoPreferredTimezone
             | Self::Unauthorized
             | Self::UserYoutubeChannelLimitReached
             | Self::YoutubeChannelNotFound => true,

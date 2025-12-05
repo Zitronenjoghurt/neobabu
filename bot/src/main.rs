@@ -46,7 +46,7 @@ async fn main() {
                 //let guild_id = poise::serenity_prelude::GuildId::new();
                 //poise::builtins::register_in_guild(ctx, &framework.options().commands, guild_id).await?;
                 //poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                info!("Commands registered!");
+                //info!("Commands registered!");
                 Ok(state)
             })
         })

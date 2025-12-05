@@ -17,15 +17,16 @@ impl O2DRenderable for Object2D {
     }
 }
 
+#[derive(Clone)]
 pub struct O2DRenderer {
     atlas_cache: Arc<AtlasCache>,
 }
 
 impl O2DRenderer {
-    pub fn initialize() -> CoreResult<Arc<Self>> {
-        Ok(Arc::new(Self {
+    pub fn initialize() -> CoreResult<Self> {
+        Ok(Self {
             atlas_cache: AtlasCache::initialize()?,
-        }))
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

@@ -9,6 +9,7 @@ use chrono_tz::Tz;
 use image::RgbaImage;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
+use std::io::Cursor;
 use std::time::Duration;
 use strum::IntoEnumIterator;
 
@@ -142,6 +143,17 @@ impl FarmWorld {
         } else {
             o2d.render(&objects, self.grid.height(), self.grid.width(), 16)
         }
+    }
+
+    pub fn render_png(
+        &mut self,
+        o2d: &O2DRenderer,
+        debug: FarmWorldDebugOptions,
+    ) -> CoreResult<Vec<u8>> {
+        let image = self.render(o2d, debug)?;
+        let mut bytes = Cursor::new(Vec::new());
+        image.write_to(&mut bytes, image::ImageFormat::Png)?;
+        Ok(bytes.into_inner())
     }
 }
 

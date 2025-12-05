@@ -32,6 +32,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(string(FarmingWorld::UserId))
                     .col(integer(FarmingWorld::Index))
+                    .col(string(FarmingWorld::Name))
                     .col(json_binary(FarmingWorld::Data))
                     .col(timestamp(FarmingWorld::CreatedAt).default(Expr::current_timestamp()))
                     .col(timestamp(FarmingWorld::UpdatedAt).default(Expr::current_timestamp()))
@@ -86,6 +87,7 @@ enum FarmingWorld {
     Table,
     UserId,
     Index,
+    Name,
     Data,
     CreatedAt,
     UpdatedAt,

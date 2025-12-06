@@ -32,6 +32,8 @@ pub async fn create(
     name: String,
     hemisphere: HemisphereOption,
 ) -> BotResult<()> {
+    ctx.defer().await?;
+
     let user = ctx.fetch_author_model().await?;
     let world = match ctx
         .services()

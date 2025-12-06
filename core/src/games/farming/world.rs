@@ -1,6 +1,7 @@
 use crate::error::CoreResult;
 use crate::games::farming::day_night::day_night_color;
 use crate::games::farming::hemisphere::Hemisphere;
+use crate::games::farming::season::Season;
 use crate::games::farming::tile::{FarmTile, TileContext};
 use crate::rendering::o2d::prelude::{O2DRenderer, Object2D};
 use crate::types::grid::cardinal::Cardinal;
@@ -68,6 +69,17 @@ impl FarmWorld {
         for tile in &mut self.grid.iter_tiles_mut() {
             tile.update(elapsed);
         }
+    }
+}
+
+// Misc
+impl FarmWorld {
+    pub fn current_season(&self) -> Season {
+        self.hemisphere.current_season()
+    }
+
+    pub fn current_time(&self) -> chrono::DateTime<Tz> {
+        chrono::Utc::now().with_timezone(&self.tz)
     }
 }
 
@@ -151,9 +163,21 @@ impl FarmWorld {
         debug: FarmWorldDebugOptions,
     ) -> CoreResult<Vec<u8>> {
         let image = self.render(o2d, debug)?;
+        let scaled = image::imageops::resize(
+            &image,
+            image.width() * 3,
+            image.height() * 3,
+            image::imageops::FilterType::Nearest,
+        );
+        drop(image);
+
         let mut bytes = Cursor::new(Vec::new());
-        image.write_to(&mut bytes, image::ImageFormat::Png)?;
-        Ok(bytes.into_inner())
+        scaled.write_to(&mut bytes, image::ImageFormat::Png)?;
+
+        let opts = oxipng::Options::default();
+        let optimized = oxipng::optimize_from_memory(&bytes.into_inner(), &opts)?;
+
+        Ok(optimized)
     }
 }
 

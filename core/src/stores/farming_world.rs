@@ -1,6 +1,7 @@
 use crate::database::entity::farming_world;
 use crate::database::Database;
 use crate::error::CoreResult;
+use futures::StreamExt;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use std::sync::Arc;
 
@@ -30,6 +31,17 @@ impl FarmingWorldStore {
             .filter(farming_world::Column::UserId.eq(user_id.as_ref()))
             .count(self.db.conn())
             .await?)
+    }
+
+    pub async fn stream_by_user(
+        &self,
+        user_id: impl AsRef<str>,
+    ) -> CoreResult<impl futures::Stream<Item = CoreResult<farming_world::Model>>> {
+        Ok(farming_world::Entity::find()
+            .filter(farming_world::Column::UserId.eq(user_id.as_ref()))
+            .stream(self.db.conn())
+            .await?
+            .map(|model| Ok(model?)))
     }
 
     pub async fn insert(

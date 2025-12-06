@@ -15,6 +15,8 @@ pub enum BotError {
     Core(#[from] neobabu_core::error::CoreError),
     #[error("Error reading environment variable: {0}")]
     Env(#[from] std::env::VarError),
+    #[error("Farm not found.")]
+    FarmNotFound,
     #[error("This command can only be used in a guild.")]
     GuildCommandOnly,
     #[error(
@@ -41,7 +43,8 @@ impl BotError {
     pub fn is_user_error(&self) -> bool {
         match self {
             Self::Core(error) => error.is_user_error(),
-            Self::GuildCommandOnly
+            Self::FarmNotFound
+            | Self::GuildCommandOnly
             | Self::InvalidTimezone(_)
             | Self::TargetBotOrYourself
             | Self::TargetYourself => true,

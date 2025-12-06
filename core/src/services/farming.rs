@@ -3,6 +3,9 @@ use crate::error::{CoreError, CoreResult};
 use crate::games::farming::hemisphere::Hemisphere;
 use crate::games::farming::procedural::ProceduralWorld;
 use crate::stores::Stores;
+use futures::StreamExt;
+use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
 use sea_orm::Set;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -62,5 +65,31 @@ impl FarmingService {
         };
 
         self.stores.farming_world.insert(new).await
+    }
+
+    pub async fn fuzzy_search_worlds(
+        &self,
+        user_id: impl AsRef<str>,
+        partial: impl AsRef<str>,
+        limit: usize,
+    ) -> CoreResult<Vec<farming_world::Model>> {
+        let mut worlds = self.stores.farming_world.stream_by_user(user_id).await?;
+
+        let matcher = SkimMatcherV2::default();
+        let mut results: Vec<(farming_world::Model, i64)> = Vec::new();
+
+        while let Some(world) = worlds.next().await {
+            let world = world?;
+            if let Some(score) = matcher.fuzzy_match(world.name.as_str(), partial.as_ref()) {
+                results.push((world, score));
+            }
+        }
+
+        results.sort_by_key(|(_, score)| -score);
+        Ok(results
+            .into_iter()
+            .map(|(world, _)| world)
+            .take(limit)
+            .collect())
     }
 }

@@ -48,6 +48,8 @@ pub enum CoreError {
     NoPreferredTimezone,
     #[error("OS error: {0}")]
     Os(#[from] rand::rand_core::OsError),
+    #[error("OxiPNG error: {0}")]
+    OxiPng(#[from] oxipng::PngError),
     #[error("Reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
     #[error("Reqwest middleware error: {0}")]
@@ -102,6 +104,7 @@ impl CoreError {
             | Self::MissingNasaApiKey
             | Self::MissingYoutubeApiKey
             | Self::Os(_)
+            | Self::OxiPng(_)
             | Self::Reqwest(_)
             | Self::ReqwestMiddleware(_)
             | Self::Serenity(_)

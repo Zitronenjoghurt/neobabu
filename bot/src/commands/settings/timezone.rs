@@ -6,6 +6,7 @@ use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
 use crate::ui::embed::interactive::rows::accept::AcceptRowTrait;
 use crate::ui::embed::interactive::InteractiveEmbed;
 use crate::ui::embed::CreateEmbedExt;
+use crate::utils::formatting::humane_datetime;
 use crate::Context;
 use chrono_tz::Tz;
 use neobabu_core::database::entity::user;
@@ -52,12 +53,8 @@ impl TimezoneRow {
             .map(|tz| format!("\n\n*Your current preferred timezone is: `{}`*", tz))
             .unwrap_or_default();
 
-        let local_time_12h = time.format("%-I:%M %p").to_string();
-        let local_time_24h = time.format("%H:%M").to_string();
-        let date = time.format("%A, %B %-d, %Y").to_string();
-        let local_time = format!(
-            "The current time there is: **`{date}`** at **`{local_time_12h}`** (`{local_time_24h}`)"
-        );
+        let time_formatted = humane_datetime(time);
+        let local_time = format!("The current time there is: {time_formatted}");
 
         let description = format!(
             "You selected **`{}`**\n{local_time}{past_timezone}",

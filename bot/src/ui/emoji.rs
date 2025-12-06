@@ -1,3 +1,4 @@
+use neobabu_core::games::farming::season::Season;
 use rand::prelude::IndexedRandom;
 
 #[derive(Debug, Copy, Clone)]
@@ -122,12 +123,16 @@ pub enum EmojiType {
     FaceZany,
     FaceZipperMouth,
     Friends,
+    MapleLeaf,
     Paper,
+    PurpleFlower,
     Pvp,
     Rock,
     Scissors,
+    Snowflake,
     Sparkle,
     Stats,
+    Sun,
     Trophy,
 }
 
@@ -254,12 +259,16 @@ impl EmojiType {
             Self::FaceZany => "face_zany",
             Self::FaceZipperMouth => "face_zipper_mouth",
             Self::Friends => "friends",
+            Self::MapleLeaf => "maple_leaf",
             Self::Paper => "paper",
+            Self::PurpleFlower => "purple_flower",
             Self::Pvp => "pvp",
             Self::Rock => "rock",
             Self::Scissors => "scissors",
+            Self::Snowflake => "snowflake",
             Self::Sparkle => "sparkle",
             Self::Stats => "stats",
+            Self::Sun => "sun",
             Self::Trophy => "trophy",
         }
     }
@@ -394,5 +403,16 @@ impl EmojiType {
     pub fn random_winner() -> Self {
         let choice = Self::choices_winner().choose(&mut rand::rng()).copied();
         choice.unwrap_or(Self::FaceAstonished)
+    }
+}
+
+impl From<Season> for EmojiType {
+    fn from(value: Season) -> Self {
+        match value {
+            Season::Spring => Self::PurpleFlower,
+            Season::Summer => Self::Sun,
+            Season::Autumn => Self::MapleLeaf,
+            Season::Winter => Self::Snowflake,
+        }
     }
 }

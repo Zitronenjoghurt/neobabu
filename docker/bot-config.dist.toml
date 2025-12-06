@@ -1,3 +1,5 @@
+owner_ids = []
+
 [emojis]
 arrow_back = 0
 arrow_left = 0

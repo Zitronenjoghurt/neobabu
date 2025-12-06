@@ -1,7 +1,7 @@
 use crate::error::BotError;
 use crate::events::event_handler;
 use crate::state::BotState;
-use poise::serenity_prelude::{ClientBuilder, GatewayIntents};
+use poise::serenity_prelude::{ClientBuilder, GatewayIntents, UserId};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
@@ -25,9 +25,21 @@ async fn main() {
     let bot_token = std::env::var("BOT_TOKEN").unwrap();
     let state = BotState::initialize().await.unwrap();
 
+    let owner_ids = state
+        .config
+        .owner_ids
+        .iter()
+        .map(|id| UserId::new(*id))
+        .collect();
+
     let commands = commands::get_commands();
     let options = poise::FrameworkOptions {
         commands,
+        prefix_options: poise::PrefixFrameworkOptions {
+            prefix: Some("%n".to_string()),
+            ..Default::default()
+        },
+        owners: owner_ids,
         on_error: |error| Box::pin(error::handler(error)),
         event_handler: |ctx, event, framework, state| {
             Box::pin(event_handler(ctx, event, framework, state))
@@ -36,17 +48,11 @@ async fn main() {
     };
 
     let framework = poise::Framework::<BotState, BotError>::builder()
-        .setup(move |ctx, _ready, framework| {
+        .setup(move |ctx, _ready, _framework| {
             Box::pin(async move {
                 state.core.start_jobs().await?;
                 let event_rx = state.core.event_bus.subscribe();
                 core_events::listen(ctx.clone(), state.clone(), event_rx).await;
-
-                //info!("Registering commands...");
-                //let guild_id = poise::serenity_prelude::GuildId::new();
-                //poise::builtins::register_in_guild(ctx, &framework.options().commands, guild_id).await?;
-                //poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                //info!("Commands registered!");
                 Ok(state)
             })
         })

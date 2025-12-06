@@ -99,6 +99,7 @@ pub async fn handler(framework_error: FrameworkError<'_, BotState, BotError>) {
         } => {
             error!("An error occurred during bot setup: {error} | {data_about_bot:?}")
         }
+        FrameworkError::UnknownCommand { .. } => {}
         _ => error!("An unhandled framework error occurred: {framework_error}"),
     }
 }
@@ -208,7 +209,7 @@ async fn handle_not_an_owner(ctx: &Context<'_>) {
     let embed = CreateEmbed::new()
         .error()
         .title("Not an Owner")
-        .description("You are not an owner of this bot.");
+        .description("This command is reserved for bot owners only.");
     let _ = ctx.send(embed.create_reply().ephemeral(true)).await;
 }
 

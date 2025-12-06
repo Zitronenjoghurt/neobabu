@@ -1,4 +1,5 @@
 use crate::error::BotResult;
+use std::collections::HashSet;
 
 mod credentials;
 mod emoji;
@@ -7,6 +8,8 @@ mod emoji;
 pub struct BotConfig {
     #[serde(default)]
     pub emojis: emoji::BotConfigEmoji,
+    #[serde(default)]
+    pub owner_ids: HashSet<u64>,
 }
 
 impl BotConfig {

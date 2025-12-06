@@ -5,8 +5,10 @@
 //! put into the rendering module in the future.
 
 mod atlas;
+mod bitmap;
 mod object;
 pub mod prelude;
 mod render;
 mod sprite;
+mod text;
 mod tileset;

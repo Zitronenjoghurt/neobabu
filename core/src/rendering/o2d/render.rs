@@ -1,10 +1,12 @@
 use crate::error::CoreResult;
 use crate::rendering::o2d::atlas::cache::AtlasCache;
+use crate::rendering::o2d::bitmap::Bitmap;
 use crate::rendering::o2d::object::grid::O2DGrid;
-use crate::rendering::o2d::object::visual::VisualO2D;
+use crate::rendering::o2d::object::visual::{TextVisual, VisualO2D};
 use crate::rendering::o2d::object::Object2D;
 use crate::rendering::o2d::sprite::Sprite;
-use image::{Pixel, RgbaImage};
+use crate::rendering::o2d::text::char_bitmap;
+use image::{Pixel, Rgba, RgbaImage};
 use std::sync::Arc;
 
 pub trait O2DRenderable {
@@ -13,7 +15,7 @@ pub trait O2DRenderable {
 
 impl O2DRenderable for Object2D {
     fn to_objects(&self) -> Vec<Object2D> {
-        vec![*self]
+        vec![self.clone()]
     }
 }
 
@@ -43,15 +45,14 @@ impl O2DRenderer {
             .into_iter()
             .partition(|obj| obj.visual.is_effect());
 
-        let mut grid = O2DGrid::from_objects(geometry, tile_height, tile_width);
-        grid.sort();
+        let grid = O2DGrid::from_objects(geometry, tile_height, tile_width);
 
         let width = tile_width as u32 * tile_size as u32;
         let height = tile_height as u32 * tile_size as u32;
         let mut canvas = RgbaImage::new(width, height);
 
         let mut object_refs = grid.iter_objects().collect::<Vec<_>>();
-        object_refs.sort_by_key(|o| o.position.tile_y);
+        object_refs.sort_by_key(|o| (o.position.z_index, o.position.tile_y, o.position.y_offset));
 
         for object in object_refs {
             self.render_object(&mut canvas, object, &grid, tile_size)?;
@@ -149,18 +150,15 @@ impl O2DRenderer {
                 let pos = object.position.pixel_position(tile_size);
                 self.draw_sprite(canvas, &sprite, pos, tile_size)?;
             }
+            VisualO2D::Text(text) => {
+                self.draw_text(canvas, text, object.position.pixel_position(tile_size))
+            }
             _ => {}
         }
         Ok(())
     }
 
-    fn draw_color(
-        &self,
-        canvas: &mut RgbaImage,
-        color: &image::Rgba<u8>,
-        pos: (u32, u32),
-        tile_size: u8,
-    ) {
+    fn draw_color(&self, canvas: &mut RgbaImage, color: &Rgba<u8>, pos: (u32, u32), tile_size: u8) {
         for y in 0..tile_size as u32 {
             for x in 0..tile_size as u32 {
                 let dst_x = pos.0 + x;
@@ -210,6 +208,51 @@ impl O2DRenderer {
         }
 
         Ok(())
+    }
+
+    fn draw_bitmap(
+        &self,
+        canvas: &mut RgbaImage,
+        bitmap: &Bitmap<'_>,
+        color: Rgba<u8>,
+        pos: (u32, u32),
+    ) {
+        for (x_rel, y_rel, is_set) in bitmap.iter_pixels() {
+            let x = ((pos.0 as isize).saturating_add(x_rel)) as u32;
+            let y = ((pos.1 as isize).saturating_add(y_rel)) as u32;
+            if x < canvas.width() && y < canvas.height() && is_set {
+                let pixel = canvas.get_pixel_mut(x, y);
+                *pixel = color;
+            }
+        }
+    }
+
+    fn draw_text(&self, canvas: &mut RgbaImage, visual: &TextVisual, pos: (u32, u32)) {
+        let mut x_offset: usize = 0;
+        let mut y_offset: usize = 0;
+        for char in visual.text.chars() {
+            let bitmap = char_bitmap(char);
+            let max_width = match visual.max_width {
+                Some(max_width) => max_width,
+                None => canvas.width().saturating_sub(pos.0),
+            };
+
+            if visual.wrapping && x_offset.saturating_add(bitmap.width) >= max_width as usize {
+                x_offset = 0;
+                y_offset = y_offset.saturating_add(bitmap.height() + 1);
+            };
+
+            self.draw_bitmap(
+                canvas,
+                &bitmap,
+                visual.color,
+                (
+                    pos.0.wrapping_add(x_offset as u32),
+                    pos.1.wrapping_add(y_offset as u32),
+                ),
+            );
+            x_offset = x_offset.wrapping_add(bitmap.width).wrapping_add(1)
+        }
     }
 
     fn apply_lighting(

@@ -24,12 +24,6 @@ impl O2DGrid {
         }
     }
 
-    pub fn sort(&mut self) {
-        for (_, objects) in self.grid.iter_mut() {
-            objects.sort_by_key(|o| (o.position.z_index, o.position.y_offset));
-        }
-    }
-
     pub fn iter_objects(&self) -> impl Iterator<Item = &Object2D> {
         self.grid.values().flatten()
     }

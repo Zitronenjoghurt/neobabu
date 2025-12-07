@@ -42,7 +42,7 @@ struct TimezoneState {
 
 #[async_trait::async_trait]
 impl SimpleAcceptStateTrait for TimezoneState {
-    async fn embed_question(&self, _context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_question(&self, _ctx: &Context) -> BotResult<CreateEmbed> {
         let time = chrono::Utc::now().with_timezone(&self.tz);
 
         let past_timezone = self
@@ -66,14 +66,14 @@ impl SimpleAcceptStateTrait for TimezoneState {
             .ui_color(UiColor::Yellow))
     }
 
-    async fn embed_accepted(&self, _context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_accepted(&self, _ctx: &Context) -> BotResult<CreateEmbed> {
         Ok(CreateEmbed::default()
             .ui_color(UiColor::Success)
             .title("Timezone updated")
             .description(format!("Your timezone has been set to **`{}`**", self.tz)))
     }
 
-    async fn embed_denied(&self, _context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_denied(&self, _ctx: &Context) -> BotResult<CreateEmbed> {
         Ok(CreateEmbed::default()
             .ui_color(UiColor::Gray)
             .title("Timezone change cancelled")
@@ -82,12 +82,12 @@ impl SimpleAcceptStateTrait for TimezoneState {
 
     async fn on_accept(
         &mut self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         _interaction: &ComponentInteraction,
     ) -> BotResult<()> {
         let mut active = self.user.clone().into_active_model();
         active.preferred_timezone = Set(Some(self.tz.to_string()));
-        context.stores().user.update(active).await?;
+        ctx.stores().user.update(active).await?;
         Ok(())
     }
 

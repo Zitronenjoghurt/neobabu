@@ -76,7 +76,7 @@ pub trait PaginationStateTrait: Sized + Send + Sync {
 impl<T: PaginationStateTrait> InteractiveState for PaginationState<T> {
     async fn handle_interaction(
         &mut self,
-        _context: &Context,
+        _ctx: &Context,
         interaction: &ComponentInteraction,
     ) -> BotResult<InteractiveStateResponse> {
         let mut do_update = true;
@@ -104,15 +104,15 @@ impl<T: PaginationStateTrait> InteractiveState for PaginationState<T> {
         Ok(InteractiveStateResponse::new().update(do_update))
     }
 
-    async fn render_content(&self, context: &Context) -> BotResult<Option<String>> {
-        self.0.content(context).await
+    async fn render_content(&self, ctx: &Context) -> BotResult<Option<String>> {
+        self.0.content(ctx).await
     }
 
-    async fn render_embed(&self, context: &Context) -> BotResult<CreateEmbed> {
-        self.0.render_current_page(context).await
+    async fn render_embed(&self, ctx: &Context) -> BotResult<CreateEmbed> {
+        self.0.render_current_page(ctx).await
     }
 
-    async fn render_rows(&self, context: &Context) -> BotResult<Vec<CreateActionRow>> {
+    async fn render_rows(&self, ctx: &Context) -> BotResult<Vec<CreateActionRow>> {
         if self.0.max_pages() <= 1 {
             return Ok(vec![]);
         };
@@ -121,29 +121,29 @@ impl<T: PaginationStateTrait> InteractiveState for PaginationState<T> {
             return Ok(vec![CreateActionRow::Buttons(vec![
                 CreateButton::new("pagination_row_left")
                     .style(ButtonStyle::Secondary)
-                    .emoji(context.emoji(EmojiType::ArrowLeft)),
+                    .emoji(ctx.emoji(EmojiType::ArrowLeft)),
                 CreateButton::new("pagination_row_right")
                     .style(ButtonStyle::Secondary)
-                    .emoji(context.emoji(EmojiType::ArrowRight)),
+                    .emoji(ctx.emoji(EmojiType::ArrowRight)),
             ])]);
         };
 
         Ok(vec![CreateActionRow::Buttons(vec![
             CreateButton::new("pagination_row_double_left")
                 .style(ButtonStyle::Secondary)
-                .emoji(context.emoji(EmojiType::ArrowDoubleLeft)),
+                .emoji(ctx.emoji(EmojiType::ArrowDoubleLeft)),
             CreateButton::new("pagination_row_left")
                 .style(ButtonStyle::Secondary)
-                .emoji(context.emoji(EmojiType::ArrowLeft)),
+                .emoji(ctx.emoji(EmojiType::ArrowLeft)),
             CreateButton::new("pagination_row_right")
                 .style(ButtonStyle::Secondary)
-                .emoji(context.emoji(EmojiType::ArrowRight)),
+                .emoji(ctx.emoji(EmojiType::ArrowRight)),
             CreateButton::new("pagination_row_double_right")
                 .style(ButtonStyle::Secondary)
-                .emoji(context.emoji(EmojiType::ArrowDoubleRight)),
+                .emoji(ctx.emoji(EmojiType::ArrowDoubleRight)),
             CreateButton::new("pagination_row_back")
                 .style(ButtonStyle::Secondary)
-                .emoji(context.emoji(EmojiType::ArrowBack)),
+                .emoji(ctx.emoji(EmojiType::ArrowBack)),
         ])])
     }
 }

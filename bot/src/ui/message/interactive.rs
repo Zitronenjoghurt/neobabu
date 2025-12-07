@@ -15,7 +15,7 @@ pub mod state;
 
 pub struct InteractiveMessage<'a> {
     state: Box<dyn InteractiveState>,
-    context: &'a Context<'a>,
+    ctx: &'a Context<'a>,
     timeout: Duration,
     tick_interval: Option<Duration>,
     on_timeout: Option<CreateEmbed>,
@@ -23,10 +23,10 @@ pub struct InteractiveMessage<'a> {
 }
 
 impl<'a> InteractiveMessage<'a> {
-    pub fn new(context: &'a Context<'a>, state: impl InteractiveState + 'static) -> Self {
+    pub fn new(ctx: &'a Context<'a>, state: impl InteractiveState + 'static) -> Self {
         Self {
             state: Box::new(state),
-            context,
+            ctx,
             timeout: Duration::from_secs(300),
             tick_interval: None,
             on_timeout: None,
@@ -56,19 +56,19 @@ impl<'a> InteractiveMessage<'a> {
 
     pub async fn run(mut self) -> BotResult<()> {
         let mut reply = CreateReply::default()
-            .embed(self.state.render_embed(self.context).await?)
-            .components(self.state.render_rows(self.context).await?);
-        if let Some(message) = &self.state.render_content(self.context).await? {
+            .embed(self.state.render_embed(self.ctx).await?)
+            .components(self.state.render_rows(self.ctx).await?);
+        if let Some(message) = &self.state.render_content(self.ctx).await? {
             reply = reply.content(message);
         }
 
-        let reply_handle = self.context.send(reply).await?;
+        let reply_handle = self.ctx.send(reply).await?;
         let result = self.do_run(&reply_handle).await;
         if let Err(error) = result {
-            let error_embed = handle_command_error(error, self.context).await;
+            let error_embed = handle_command_error(error, self.ctx).await;
             reply_handle
                 .edit(
-                    *self.context,
+                    *self.ctx,
                     CreateReply::default().embed(error_embed).components(vec![]),
                 )
                 .await?;
@@ -80,7 +80,7 @@ impl<'a> InteractiveMessage<'a> {
     async fn do_run(&mut self, reply_handle: &ReplyHandle<'_>) -> BotResult<()> {
         let message = reply_handle.message().await?;
         let collector = message
-            .await_component_interaction(self.context.serenity_context())
+            .await_component_interaction(self.ctx.serenity_context())
             .timeout(self.timeout);
 
         let mut collector_stream = collector.stream();
@@ -89,24 +89,24 @@ impl<'a> InteractiveMessage<'a> {
         loop {
             tokio::select! {
                 Some(interaction) = collector_stream.next() => {
-                    if !self.allow_anyone_to_interact && interaction.user.id != self.context.author().id {
+                    if !self.allow_anyone_to_interact && interaction.user.id != self.ctx.author().id {
                         interaction
                             .create_response(
-                                self.context.serenity_context(),
+                                self.ctx.serenity_context(),
                                 CreateInteractionResponse::Acknowledge,
                             )
                             .await?;
                         continue;
                     }
 
-                    let response = self.state.handle_interaction(self.context, &interaction).await?;
+                    let response = self.state.handle_interaction(self.ctx, &interaction).await?;
 
                     if response.do_update {
                         self.update_interaction(&interaction, &response).await?;
                     } else {
                         interaction
                             .create_response(
-                                self.context.serenity_context(),
+                                self.ctx.serenity_context(),
                                 CreateInteractionResponse::Acknowledge,
                             )
                             .await?;
@@ -123,7 +123,7 @@ impl<'a> InteractiveMessage<'a> {
                         None => std::future::pending().await
                     }
                 } => {
-                    let response = self.state.on_tick(self.context).await?;
+                    let response = self.state.on_tick(self.ctx).await?;
 
                     if response.do_update {
                         self.update_reply(reply_handle, &response).await?;
@@ -138,14 +138,14 @@ impl<'a> InteractiveMessage<'a> {
                     let timeout_embed = if let Some(embed) = self.on_timeout.clone() {
                         embed
                     } else {
-                        self.state.render_embed(self.context).await?
+                        self.state.render_embed(self.ctx).await?
                             .footer(CreateEmbedFooter::new("This interaction has timed out."))
                             .ui_color(UiColor::Gray)
                     };
 
                     reply_handle
                         .edit(
-                            *self.context,
+                            *self.ctx,
                             CreateReply::default()
                                 .embed(timeout_embed)
                                 .components(vec![]),
@@ -168,21 +168,21 @@ impl<'a> InteractiveMessage<'a> {
         let components = if response.do_stop {
             vec![]
         } else {
-            self.state.render_rows(self.context).await?
+            self.state.render_rows(self.ctx).await?
         };
 
         interaction
             .create_response(
-                self.context.serenity_context(),
+                self.ctx.serenity_context(),
                 CreateInteractionResponse::UpdateMessage(
                     CreateInteractionResponseMessage::default()
                         .content(
                             self.state
-                                .render_content(self.context)
+                                .render_content(self.ctx)
                                 .await?
                                 .unwrap_or_default(),
                         )
-                        .embed(self.state.render_embed(self.context).await?)
+                        .embed(self.state.render_embed(self.ctx).await?)
                         .components(components),
                 ),
             )
@@ -198,20 +198,20 @@ impl<'a> InteractiveMessage<'a> {
         let components = if response.do_stop {
             vec![]
         } else {
-            self.state.render_rows(self.context).await?
+            self.state.render_rows(self.ctx).await?
         };
 
         reply_handle
             .edit(
-                *self.context,
+                *self.ctx,
                 CreateReply::default()
                     .content(
                         self.state
-                            .render_content(self.context)
+                            .render_content(self.ctx)
                             .await?
                             .unwrap_or_default(),
                     )
-                    .embed(self.state.render_embed(self.context).await?)
+                    .embed(self.state.render_embed(self.ctx).await?)
                     .components(components),
             )
             .await?;

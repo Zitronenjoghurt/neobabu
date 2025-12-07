@@ -162,21 +162,21 @@ impl PlayingCardDeck {
     }
 
     pub fn add_top(&mut self, card: PlayingCard) {
-        self.cards.push_back(card);
-    }
-
-    pub fn add_bottom(&mut self, card: PlayingCard) {
         self.cards.push_front(card);
     }
 
-    pub fn add_multiple_top(&mut self, cards: &[PlayingCard]) {
-        self.cards.extend(cards);
+    pub fn add_bottom(&mut self, card: PlayingCard) {
+        self.cards.push_back(card);
     }
 
-    pub fn add_multiple_bottom(&mut self, cards: &[PlayingCard]) {
+    pub fn add_multiple_top(&mut self, cards: &[PlayingCard]) {
         for card in cards.iter().rev() {
             self.cards.push_front(*card);
         }
+    }
+
+    pub fn add_multiple_bottom(&mut self, cards: &[PlayingCard]) {
+        self.cards.extend(cards);
     }
 
     pub fn add_random<R: Rng>(&mut self, card: PlayingCard, rng: &mut R) {
@@ -189,11 +189,11 @@ impl PlayingCardDeck {
     }
 
     pub fn draw_top(&mut self) -> Option<PlayingCard> {
-        self.cards.pop_back()
+        self.cards.pop_front()
     }
 
     pub fn draw_bottom(&mut self) -> Option<PlayingCard> {
-        self.cards.pop_front()
+        self.cards.pop_back()
     }
 
     pub fn draw_random<R: Rng>(&mut self, rng: &mut R) -> Option<PlayingCard> {

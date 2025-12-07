@@ -11,13 +11,13 @@ pub struct SimpleAcceptState<T: SimpleAcceptStateTrait> {
 
 #[async_trait::async_trait]
 pub trait SimpleAcceptStateTrait: Sized + Send + Sync {
-    async fn embed_question(&self, context: &Context) -> BotResult<CreateEmbed>;
-    async fn embed_accepted(&self, context: &Context) -> BotResult<CreateEmbed>;
-    async fn embed_denied(&self, context: &Context) -> BotResult<CreateEmbed>;
+    async fn embed_question(&self, ctx: &Context) -> BotResult<CreateEmbed>;
+    async fn embed_accepted(&self, ctx: &Context) -> BotResult<CreateEmbed>;
+    async fn embed_denied(&self, ctx: &Context) -> BotResult<CreateEmbed>;
 
     async fn on_accept(
         &mut self,
-        _context: &Context<'_>,
+        _ctx: &Context<'_>,
         _interaction: &ComponentInteraction,
     ) -> BotResult<()> {
         Ok(())
@@ -25,13 +25,13 @@ pub trait SimpleAcceptStateTrait: Sized + Send + Sync {
 
     async fn on_deny(
         &mut self,
-        _context: &Context<'_>,
+        _ctx: &Context<'_>,
         _interaction: &ComponentInteraction,
     ) -> BotResult<()> {
         Ok(())
     }
 
-    async fn content(&self, _context: &Context) -> BotResult<Option<String>> {
+    async fn content(&self, _ctx: &Context) -> BotResult<Option<String>> {
         Ok(None)
     }
 
@@ -55,34 +55,34 @@ pub trait SimpleAcceptStateTrait: Sized + Send + Sync {
 impl<T: SimpleAcceptStateTrait> AcceptStateTrait for SimpleAcceptState<T> {
     async fn on_accept(
         &mut self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         interaction: &ComponentInteraction,
     ) -> BotResult<InteractiveStateResponse> {
-        self.inner.on_accept(context, interaction).await?;
+        self.inner.on_accept(ctx, interaction).await?;
         self.accepted = Some(true);
         Ok(InteractiveStateResponse::new_halt())
     }
 
     async fn on_deny(
         &mut self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         interaction: &ComponentInteraction,
     ) -> BotResult<InteractiveStateResponse> {
-        self.inner.on_deny(context, interaction).await?;
+        self.inner.on_deny(ctx, interaction).await?;
         self.accepted = Some(false);
         Ok(InteractiveStateResponse::new_halt())
     }
 
-    async fn embed(&self, context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed(&self, ctx: &Context) -> BotResult<CreateEmbed> {
         match self.accepted {
-            Some(true) => self.inner.embed_accepted(context).await,
-            Some(false) => self.inner.embed_denied(context).await,
-            None => self.inner.embed_question(context).await,
+            Some(true) => self.inner.embed_accepted(ctx).await,
+            Some(false) => self.inner.embed_denied(ctx).await,
+            None => self.inner.embed_question(ctx).await,
         }
     }
 
-    async fn content(&self, context: &Context) -> BotResult<Option<String>> {
-        self.inner.content(context).await
+    async fn content(&self, ctx: &Context) -> BotResult<Option<String>> {
+        self.inner.content(ctx).await
     }
 
     fn accept_text(&self) -> &'static str {

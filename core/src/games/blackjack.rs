@@ -1,4 +1,4 @@
-use crate::games::playing_cards::{PlayingCard, PlayingCardDeck};
+use crate::games::playing_cards::PlayingCardDeck;
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -14,6 +14,7 @@ pub struct BlackjackGame {
     pub dealer: BlackjackPlayer,
     pub players: HashMap<String, BlackjackPlayer>,
     pub current_player: Option<String>,
+    pub turn_order: Vec<String>,
     pub last_move: Option<Instant>,
 }
 
@@ -23,6 +24,7 @@ impl Default for BlackjackGame {
             deck: PlayingCardDeck::new_shuffled(),
             dealer: BlackjackPlayer::default(),
             players: HashMap::new(),
+            turn_order: Vec::new(),
             current_player: None,
             last_move: None,
         }
@@ -35,8 +37,12 @@ impl BlackjackGame {
     }
 
     pub fn register_player(&mut self, player: impl AsRef<str>) {
-        self.players
-            .insert(player.as_ref().to_string(), BlackjackPlayer::default());
+        let name = player.as_ref().to_string();
+        if !self.players.contains_key(&name) {
+            self.players
+                .insert(name.clone(), BlackjackPlayer::default());
+            self.turn_order.push(name);
+        }
     }
 
     pub fn start_game(&mut self) -> bool {
@@ -44,7 +50,31 @@ impl BlackjackGame {
             return false;
         }
 
-        self.play_dealer_if_needed();
+        for _ in 0..2 {
+            for name in &self.turn_order {
+                if let Some(player) = self.players.get_mut(name) {
+                    if let Some(card) = self.deck.draw_top() {
+                        player.deck.add_bottom(card);
+                    }
+                }
+            }
+
+            if let Some(card) = self.deck.draw_top() {
+                self.dealer.deck.add_bottom(card);
+            }
+        }
+
+        self.current_player = self.turn_order.first().cloned();
+        self.last_move = Some(Instant::now());
+
+        if let Some(name) = &self.current_player {
+            if let Some(p) = self.players.get(name) {
+                if !p.can_move() {
+                    self.next_player();
+                }
+            }
+        }
+
         true
     }
 
@@ -53,75 +83,121 @@ impl BlackjackGame {
     }
 
     pub fn is_over(&self) -> bool {
-        !self.dealer.can_move() && self.players.values().all(|player| !player.can_move())
+        self.current_player.is_none() && self.dealer.standing
     }
 
     fn next_player(&mut self) {
         self.last_move = Some(Instant::now());
 
-        let player_keys: Vec<String> = self.players.keys().cloned().collect();
         let current_index = self
             .current_player
             .as_ref()
-            .map(|current| player_keys.iter().position(|p| p == current).unwrap_or(0))
-            .unwrap_or(0);
+            .and_then(|name| self.turn_order.iter().position(|p| p == name));
 
-        self.current_player = player_keys
-            .iter()
-            .skip(current_index + 1)
-            .find(|player| {
-                self.players
-                    .get(*player)
-                    .map(|player| player.can_move())
-                    .unwrap_or(false)
-            })
-            .cloned();
-    }
+        let next_index = match current_index {
+            Some(i) => i + 1,
+            None => 0,
+        };
 
-    fn play_dealer_if_needed(&mut self) {
-        if self.current_player.is_none() && self.dealer.can_move() {
-            if self.dealer.score() < 17 {
-                self.dealer
-                    .deck
-                    .add_bottom(self.deck.draw_top().unwrap_or(PlayingCard::Spades2));
-            } else {
-                self.dealer.standing = true;
-            }
-            self.next_player();
+        if next_index < self.turn_order.len() {
+            self.current_player = Some(self.turn_order[next_index].clone());
+        } else {
+            self.current_player = None;
+            self.play_dealer();
         }
     }
 
-    pub fn play(&mut self, player: impl AsRef<str>, move_: BlackjackMove) -> bool {
-        let player = player.as_ref().to_string();
-        if Some(&player) != self.current_player.as_ref() {
+    fn play_dealer(&mut self) {
+        while self.dealer.can_move() && self.dealer.score() < 17 {
+            if let Some(card) = self.deck.draw_top() {
+                self.dealer.deck.add_bottom(card);
+            } else {
+                break;
+            }
+        }
+        self.dealer.standing = true;
+    }
+
+    pub fn is_to_play(&self, player: impl AsRef<str>) -> bool {
+        self.current_player
+            .as_ref()
+            .map(|current| current == player.as_ref())
+            .unwrap_or(false)
+    }
+
+    pub fn play(&mut self, player_name: impl AsRef<str>, move_: BlackjackMove) -> bool {
+        let player_name = player_name.as_ref().to_string();
+
+        if !self.is_to_play(&player_name) {
             return false;
         }
 
-        let Some(player) = self.players.get_mut(&player) else {
+        let Some(player) = self.players.get_mut(&player_name) else {
             return false;
         };
 
         if move_ == BlackjackMove::Hit {
-            player
-                .deck
-                .add_bottom(self.deck.draw_top().unwrap_or(PlayingCard::Spades2));
+            if let Some(card) = self.deck.draw_top() {
+                player.deck.add_bottom(card);
+
+                if player.is_bust() {
+                    player.standing = true;
+                    self.next_player();
+                }
+            }
         } else {
             player.standing = true;
+            self.next_player();
         }
 
-        self.next_player();
-
+        self.last_move = Some(Instant::now());
         true
+    }
+
+    pub fn get_outcomes(&self) -> Option<HashMap<String, BlackjackOutcome>> {
+        if !self.is_over() {
+            return None;
+        }
+
+        let dealer_score = self.dealer.score();
+        let dealer_bust = self.dealer.is_bust();
+
+        let results = self
+            .players
+            .iter()
+            .map(|(name, player)| {
+                let player_score = player.score();
+                let player_bust = player.is_bust();
+
+                let outcome = if player_bust {
+                    BlackjackOutcome::Loss
+                } else if dealer_bust || player_score > dealer_score {
+                    BlackjackOutcome::Win
+                } else if player_score == dealer_score {
+                    BlackjackOutcome::Push
+                } else {
+                    BlackjackOutcome::Loss
+                };
+
+                (name.clone(), outcome)
+            })
+            .collect();
+
+        Some(results)
     }
 }
 
 #[derive(Debug, Default)]
 pub struct BlackjackPlayer {
-    deck: PlayingCardDeck,
-    standing: bool,
+    pub deck: PlayingCardDeck,
+    pub standing: bool,
 }
 
 impl BlackjackPlayer {
+    pub fn deck(&self) -> &PlayingCardDeck {
+        &self.deck
+    }
+
     pub fn score(&self) -> u8 {
         let mut cards = self.deck.iter_cards().collect::<Vec<_>>();
         cards.sort_by_key(|card| card.score());
@@ -145,4 +221,11 @@ impl BlackjackPlayer {
     pub fn can_move(&self) -> bool {
         !self.standing && !self.is_bust()
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BlackjackOutcome {
+    Win,
+    Loss,
+    Push,
 }

@@ -10,14 +10,17 @@ pub mod simple_accept;
 pub trait InteractiveState: Send + Sync {
     async fn handle_interaction(
         &mut self,
-        context: &Context,
+        ctx: &Context,
         interaction: &ComponentInteraction,
     ) -> BotResult<InteractiveStateResponse>;
-    async fn render_content(&self, context: &Context) -> BotResult<Option<String>>;
-    async fn render_embed(&self, context: &Context) -> BotResult<CreateEmbed>;
-    async fn render_rows(&self, context: &Context) -> BotResult<Vec<CreateActionRow>>;
+    async fn render_embed(&self, ctx: &Context) -> BotResult<CreateEmbed>;
+    async fn render_rows(&self, ctx: &Context) -> BotResult<Vec<CreateActionRow>>;
 
-    async fn on_tick(&mut self, _context: &Context) -> BotResult<InteractiveStateResponse> {
+    async fn render_content(&self, _ctx: &Context) -> BotResult<Option<String>> {
+        Ok(None)
+    }
+
+    async fn on_tick(&mut self, _ctx: &Context) -> BotResult<InteractiveStateResponse> {
         Ok(InteractiveStateResponse::default())
     }
 }
@@ -37,6 +40,13 @@ impl InteractiveStateResponse {
         Self {
             do_update: true,
             do_stop: true,
+        }
+    }
+
+    pub fn new_update() -> Self {
+        Self {
+            do_update: true,
+            ..Default::default()
         }
     }
 

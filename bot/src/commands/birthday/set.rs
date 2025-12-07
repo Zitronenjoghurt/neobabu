@@ -42,9 +42,9 @@ struct BirthdaySet {
 
 #[async_trait::async_trait]
 impl SimpleAcceptStateTrait for BirthdaySet {
-    async fn embed_question(&self, context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_question(&self, ctx: &Context) -> BotResult<CreateEmbed> {
         let mut embed = CreateEmbed::default()
-            .warning_user(context.author())
+            .warning_user(ctx.author())
             .title("Do you want to set your birthday?")
             .description("Your birthday will be set globally and may be **announced** on servers you have interacted with (where this bot is on).\n\nYou will **not** be able to change it again for a while. If you did not specify your birth year the bot will not announce your age.\n\n**Are you sure you want to proceed?**")
             .field("Day", self.day.to_string(), true)
@@ -60,29 +60,28 @@ impl SimpleAcceptStateTrait for BirthdaySet {
         Ok(embed)
     }
 
-    async fn embed_accepted(&self, context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_accepted(&self, ctx: &Context) -> BotResult<CreateEmbed> {
         Ok(CreateEmbed::default()
-            .success_user(context.author())
+            .success_user(ctx.author())
             .title("Birthday set")
             .description("Your birthday was set successfully."))
     }
 
-    async fn embed_denied(&self, context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_denied(&self, ctx: &Context) -> BotResult<CreateEmbed> {
         Ok(CreateEmbed::default()
             .ui_color(UiColor::Gray)
-            .user(context.author())
+            .user(ctx.author())
             .title("Birthday not set")
             .description("Your birthday was not set."))
     }
 
     async fn on_accept(
         &mut self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         _interaction: &ComponentInteraction,
     ) -> BotResult<()> {
-        let user = context.fetch_author_model().await?;
-        context
-            .services()
+        let user = ctx.fetch_author_model().await?;
+        ctx.services()
             .birthday
             .set_birthday(&user, self.day, self.month, self.year)
             .await?;

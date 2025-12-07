@@ -75,21 +75,21 @@ impl YoutubeSubscribeState {
 
 #[async_trait::async_trait]
 impl SimpleAcceptStateTrait for YoutubeSubscribeState {
-    async fn embed_question(&self, _context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_question(&self, _ctx: &Context) -> BotResult<CreateEmbed> {
         Ok(self.basic_embed()
             .ui_color(UiColor::Warning)
             .title("New channel subscription")
             .description(format!("Do you want to subscribe to this channel?\n\nDouble check this is the correct channel before proceeding:\n{}", self.channel.url())))
     }
 
-    async fn embed_accepted(&self, _context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_accepted(&self, _ctx: &Context) -> BotResult<CreateEmbed> {
         Ok(self.basic_embed()
             .ui_color(UiColor::Success)
             .title("Channel successfully subscribed")
             .description("If you enabled the youtube notification settings on this server, you will begin to receive notifications for every new video this channel uploads."))
     }
 
-    async fn embed_denied(&self, _context: &Context) -> BotResult<CreateEmbed> {
+    async fn embed_denied(&self, _ctx: &Context) -> BotResult<CreateEmbed> {
         Ok(self
             .basic_embed()
             .ui_color(UiColor::Gray)
@@ -99,11 +99,10 @@ impl SimpleAcceptStateTrait for YoutubeSubscribeState {
 
     async fn on_accept(
         &mut self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         _interaction: &ComponentInteraction,
     ) -> BotResult<()> {
-        context
-            .services()
+        ctx.services()
             .youtube
             .guild_subscribe(&self.guild, &self.user, &self.channel)
             .await?;

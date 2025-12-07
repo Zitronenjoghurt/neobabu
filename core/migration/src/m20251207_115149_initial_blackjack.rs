@@ -40,43 +40,6 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        manager
-            .create_table(
-                Table::create()
-                    .table(BlackJackRivals::Table)
-                    .if_not_exists()
-                    .col(string(BlackJackRivals::UserId1))
-                    .col(string(BlackJackRivals::UserId2))
-                    .col(integer(BlackJackRivals::Wins1).default(0))
-                    .col(integer(BlackJackRivals::Wins2).default(0))
-                    .col(integer(BlackJackRivals::Draws).default(0))
-                    .col(integer(BlackJackRivals::LossesBoth).default(0))
-                    .col(timestamp(BlackJackRivals::CreatedAt).default(Expr::current_timestamp()))
-                    .col(timestamp(BlackJackRivals::UpdatedAt).default(Expr::current_timestamp()))
-                    .primary_key(
-                        Index::create()
-                            .col(BlackJackRivals::UserId1)
-                            .col(BlackJackRivals::UserId2),
-                    )
-                    .check(
-                        Expr::col(BlackJackRivals::UserId1).lt(Expr::col(BlackJackRivals::UserId2)),
-                    )
-                    .foreign_key(
-                        ForeignKey::create()
-                            .from(BlackJackRivals::Table, BlackJackRivals::UserId1)
-                            .to(User::Table, User::Id)
-                            .on_delete(ForeignKeyAction::Cascade),
-                    )
-                    .foreign_key(
-                        ForeignKey::create()
-                            .from(BlackJackRivals::Table, BlackJackRivals::UserId2)
-                            .to(User::Table, User::Id)
-                            .on_delete(ForeignKeyAction::Cascade),
-                    )
-                    .to_owned(),
-            )
-            .await?;
-
         Ok(())
     }
 
@@ -115,19 +78,6 @@ enum BlackJackUser {
     LongestLossStreak,
     DrawStreak,
     LongestDrawStreak,
-    CreatedAt,
-    UpdatedAt,
-}
-
-#[derive(DeriveIden)]
-enum BlackJackRivals {
-    Table,
-    UserId1,
-    UserId2,
-    Wins1,
-    Wins2,
-    Draws,
-    LossesBoth,
     CreatedAt,
     UpdatedAt,
 }

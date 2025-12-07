@@ -4,7 +4,6 @@ use std::sync::Arc;
 pub use sea_orm::{IntoActiveModel, Set};
 
 pub mod apod;
-pub mod black_jack_rivals;
 pub mod black_jack_user;
 pub mod dashboard_session;
 pub mod farming;
@@ -25,7 +24,6 @@ pub mod youtube_video;
 
 pub struct Stores {
     pub apod: Arc<apod::ApodStore>,
-    pub bj_rivals: Arc<black_jack_rivals::BlackJackRivalsStore>,
     pub bj_user: Arc<black_jack_user::BlackJackUserStore>,
     pub dashboard_session: Arc<dashboard_session::DashboardSessionStore>,
     pub farming: Arc<farming::FarmingStore>,
@@ -49,7 +47,6 @@ impl Stores {
     pub fn initialize(db: &Arc<Database>) -> Arc<Self> {
         Arc::new(Self {
             apod: apod::ApodStore::initialize(db),
-            bj_rivals: black_jack_rivals::BlackJackRivalsStore::initialize(db),
             bj_user: black_jack_user::BlackJackUserStore::initialize(db),
             dashboard_session: dashboard_session::DashboardSessionStore::initialize(db),
             farming: farming::FarmingStore::initialize(db),

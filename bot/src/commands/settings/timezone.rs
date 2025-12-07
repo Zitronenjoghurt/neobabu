@@ -2,10 +2,9 @@ use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::autocomplete::autocomplete_timezone;
 use crate::ui::color::UiColor;
-use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
-use crate::ui::embed::interactive::rows::accept::AcceptRowTrait;
-use crate::ui::embed::interactive::InteractiveEmbed;
-use crate::ui::embed::CreateEmbedExt;
+use crate::ui::message::interactive::state::simple_accept::SimpleAcceptStateTrait;
+use crate::ui::message::interactive::InteractiveMessage;
+use crate::ui::message::CreateEmbedExt;
 use crate::utils::formatting::humane_datetime;
 use crate::Context;
 use chrono_tz::Tz;
@@ -26,10 +25,9 @@ pub async fn timezone(
 
     let user = ctx.fetch_author_model().await?;
     let tz = chrono_tz::Tz::from_str(&timezone)?;
+    let state = TimezoneState { user, tz };
 
-    let row = TimezoneRow { user, tz };
-    InteractiveEmbed::new(&ctx, row.embed())
-        .row(row.build())
+    InteractiveMessage::new(&ctx, state.build())
         .timeout(std::time::Duration::from_secs(120))
         .run()
         .await?;
@@ -37,13 +35,14 @@ pub async fn timezone(
     Ok(())
 }
 
-struct TimezoneRow {
+struct TimezoneState {
     user: user::Model,
     tz: Tz,
 }
 
-impl TimezoneRow {
-    pub fn embed(&self) -> CreateEmbed {
+#[async_trait::async_trait]
+impl SimpleAcceptStateTrait for TimezoneState {
+    async fn embed_question(&self, _context: &Context) -> BotResult<CreateEmbed> {
         let time = chrono::Utc::now().with_timezone(&self.tz);
 
         let past_timezone = self
@@ -61,43 +60,35 @@ impl TimezoneRow {
             self.tz
         );
 
-        CreateEmbed::default()
+        Ok(CreateEmbed::default()
             .title("Do you want to set your timezone?")
             .description(description)
-            .ui_color(UiColor::Yellow)
+            .ui_color(UiColor::Yellow))
     }
-}
 
-#[async_trait::async_trait]
-impl AcceptRowTrait for TimezoneRow {
-    async fn accept(
-        &self,
+    async fn embed_accepted(&self, _context: &Context) -> BotResult<CreateEmbed> {
+        Ok(CreateEmbed::default()
+            .ui_color(UiColor::Success)
+            .title("Timezone updated")
+            .description(format!("Your timezone has been set to **`{}`**", self.tz)))
+    }
+
+    async fn embed_denied(&self, _context: &Context) -> BotResult<CreateEmbed> {
+        Ok(CreateEmbed::default()
+            .ui_color(UiColor::Gray)
+            .title("Timezone change cancelled")
+            .description("Your timezone will not be updated"))
+    }
+
+    async fn on_accept(
+        &mut self,
         context: &Context<'_>,
         _interaction: &ComponentInteraction,
-    ) -> BotResult<InteractiveEmbedResponse> {
+    ) -> BotResult<()> {
         let mut active = self.user.clone().into_active_model();
         active.preferred_timezone = Set(Some(self.tz.to_string()));
         context.stores().user.update(active).await?;
-
-        Ok(InteractiveEmbedResponse::halt_with(
-            CreateEmbed::default()
-                .ui_color(UiColor::Success)
-                .title("Timezone updated")
-                .description(format!("Your timezone has been set to **`{}`**", self.tz)),
-        ))
-    }
-
-    async fn deny(
-        &self,
-        _context: &Context<'_>,
-        _interaction: &ComponentInteraction,
-    ) -> BotResult<InteractiveEmbedResponse> {
-        Ok(InteractiveEmbedResponse::halt_with(
-            CreateEmbed::default()
-                .ui_color(UiColor::Gray)
-                .title("Timezone change cancelled")
-                .description("Your timezone will not be updated"),
-        ))
+        Ok(())
     }
 
     fn accept_text(&self) -> &'static str {

@@ -1,5 +1,5 @@
 use crate::error::BotResult;
-use crate::ui::embed::CreateEmbedExt;
+use crate::ui::message::CreateEmbedExt;
 use crate::Context;
 use poise::serenity_prelude::CreateEmbed;
 

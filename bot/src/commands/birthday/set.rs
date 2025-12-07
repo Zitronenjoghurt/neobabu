@@ -1,10 +1,9 @@
 use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
-use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
-use crate::ui::embed::interactive::rows::accept::AcceptRowTrait;
-use crate::ui::embed::interactive::InteractiveEmbed;
-use crate::ui::embed::CreateEmbedExt;
+use crate::ui::message::interactive::state::simple_accept::SimpleAcceptStateTrait;
+use crate::ui::message::interactive::InteractiveMessage;
+use crate::ui::message::CreateEmbedExt;
 use crate::Context;
 use poise::serenity_prelude::{ComponentInteraction, CreateEmbed};
 
@@ -26,22 +25,8 @@ pub async fn set(
 ) -> BotResult<()> {
     ctx.defer_ephemeral().await?;
 
-    let mut embed = CreateEmbed::default()
-        .warning_user(ctx.author())
-        .title("Do you want to set your birthday?")
-        .description("Your birthday will be set globally and may be **announced** on servers you have interacted with (where this bot is on).\n\nYou will **not** be able to change it again for a while. If you did not specify your birth year the bot will not announce your age.\n\n**Are you sure you want to proceed?**")
-        .field("Day", day.to_string(), true)
-        .field("Month", month.to_string(), true);
-
-    if let Some(year) = year {
-        embed = embed.field("Year", year.to_string(), true);
-        embed = embed.footer_text(
-            "Since you specified your birth year, people will be able to know your age.",
-        )
-    }
-
-    InteractiveEmbed::new(&ctx, embed)
-        .row(BirthdaySetRow { day, month, year }.build())
+    let state = BirthdaySet { day, month, year };
+    InteractiveMessage::new(&ctx, state.build())
         .timeout(std::time::Duration::from_secs(120))
         .run()
         .await?;
@@ -49,46 +34,59 @@ pub async fn set(
     Ok(())
 }
 
-struct BirthdaySetRow {
+struct BirthdaySet {
     day: i16,
     month: i16,
     year: Option<i16>,
 }
 
 #[async_trait::async_trait]
-impl AcceptRowTrait for BirthdaySetRow {
-    async fn accept(
-        &self,
+impl SimpleAcceptStateTrait for BirthdaySet {
+    async fn embed_question(&self, context: &Context) -> BotResult<CreateEmbed> {
+        let mut embed = CreateEmbed::default()
+            .warning_user(context.author())
+            .title("Do you want to set your birthday?")
+            .description("Your birthday will be set globally and may be **announced** on servers you have interacted with (where this bot is on).\n\nYou will **not** be able to change it again for a while. If you did not specify your birth year the bot will not announce your age.\n\n**Are you sure you want to proceed?**")
+            .field("Day", self.day.to_string(), true)
+            .field("Month", self.month.to_string(), true);
+
+        if let Some(year) = self.year {
+            embed = embed.field("Year", year.to_string(), true);
+            embed = embed.footer_text(
+                "Since you specified your birth year, people will be able to know your age.",
+            )
+        };
+
+        Ok(embed)
+    }
+
+    async fn embed_accepted(&self, context: &Context) -> BotResult<CreateEmbed> {
+        Ok(CreateEmbed::default()
+            .success_user(context.author())
+            .title("Birthday set")
+            .description("Your birthday was set successfully."))
+    }
+
+    async fn embed_denied(&self, context: &Context) -> BotResult<CreateEmbed> {
+        Ok(CreateEmbed::default()
+            .ui_color(UiColor::Gray)
+            .user(context.author())
+            .title("Birthday not set")
+            .description("Your birthday was not set."))
+    }
+
+    async fn on_accept(
+        &mut self,
         context: &Context<'_>,
         _interaction: &ComponentInteraction,
-    ) -> BotResult<InteractiveEmbedResponse> {
+    ) -> BotResult<()> {
         let user = context.fetch_author_model().await?;
         context
             .services()
             .birthday
             .set_birthday(&user, self.day, self.month, self.year)
             .await?;
-
-        Ok(InteractiveEmbedResponse::halt_with(
-            CreateEmbed::default()
-                .success_user(context.author())
-                .title("Birthday set")
-                .description("Your birthday was set successfully."),
-        ))
-    }
-
-    async fn deny(
-        &self,
-        context: &Context<'_>,
-        _interaction: &ComponentInteraction,
-    ) -> BotResult<InteractiveEmbedResponse> {
-        Ok(InteractiveEmbedResponse::halt_with(
-            CreateEmbed::default()
-                .ui_color(UiColor::Gray)
-                .user(context.author())
-                .title("Birthday not set")
-                .description("Your birthday was not set."),
-        ))
+        Ok(())
     }
 
     fn accept_text(&self) -> &'static str {

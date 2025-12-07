@@ -1,5 +1,5 @@
 use crate::state::BotState;
-use crate::ui::embed::CreateEmbedExt;
+use crate::ui::message::CreateEmbedExt;
 use crate::ui::time::format_time_relative_in;
 use crate::Context;
 use nanoid::nanoid;

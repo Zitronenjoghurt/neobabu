@@ -8,6 +8,7 @@ mod m20251122_111720_initial_dashboard;
 mod m20251125_203557_initial_youtube;
 mod m20251204_132745_initial_inventory;
 mod m20251204_203659_initial_farming;
+mod m20251207_115149_initial_blackjack;
 
 pub struct Migrator;
 
@@ -23,6 +24,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20251125_203557_initial_youtube::Migration),
             Box::new(m20251204_132745_initial_inventory::Migration),
             Box::new(m20251204_203659_initial_farming::Migration),
+            Box::new(m20251207_115149_initial_blackjack::Migration),
         ]
     }
 }

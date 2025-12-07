@@ -1,13 +1,10 @@
 use crate::context::ContextExt;
 use crate::error::{BotError, BotResult};
 use crate::ui::color::UiColor;
-use crate::ui::embed::interactive::response::{
-    InteractiveEmbedResponse, InteractiveEmbedRowUpdate,
-};
-use crate::ui::embed::interactive::rows::InteractiveRow;
-use crate::ui::embed::interactive::InteractiveEmbed;
-use crate::ui::embed::CreateEmbedExt;
 use crate::ui::emoji::EmojiType;
+use crate::ui::message::interactive::state::{InteractiveState, InteractiveStateResponse};
+use crate::ui::message::interactive::InteractiveMessage;
+use crate::ui::message::CreateEmbedExt;
 use crate::ui::time::format_time_relative_at;
 use crate::Context;
 use chrono::{DateTime, Utc};
@@ -37,10 +34,6 @@ pub async fn challenge(ctx: Context<'_>, opponent: User) -> BotResult<()> {
         .fetch_or_create(opponent.id.to_string())
         .await?;
 
-    let message = format!(
-        "**<@{}>, you were challenged to a game of Rock Paper Scissors by <@{}>!**",
-        user_2.id, user_1.id
-    );
     let timeout_embed = CreateEmbed::new()
         .ui_color(UiColor::Gray)
         .title("Rock Paper Scissors")
@@ -54,17 +47,13 @@ pub async fn challenge(ctx: Context<'_>, opponent: User) -> BotResult<()> {
         game.choice_2 = Some(RPSChoice::random());
     }
 
-    let row = RPSRow {
+    let state = State {
         game,
         timeout_at: Utc::now() + Duration::from_secs(300),
         bot_session: opponent.bot,
     };
 
-    let embed = row.build_embed(&ctx);
-
-    InteractiveEmbed::new(&ctx, embed)
-        .row(row)
-        .content(message)
+    InteractiveMessage::new(&ctx, state)
         .timeout(Duration::from_secs(300))
         .on_timeout(timeout_embed)
         .allow_anyone_to_interact(true)
@@ -74,13 +63,13 @@ pub async fn challenge(ctx: Context<'_>, opponent: User) -> BotResult<()> {
     Ok(())
 }
 
-struct RPSRow {
+struct State {
     game: RPSGame,
     timeout_at: DateTime<Utc>,
     bot_session: bool,
 }
 
-impl RPSRow {
+impl State {
     pub fn build_embed(&self, context: &Context) -> CreateEmbed {
         let description = self.build_description(context);
         let color = self.build_color();
@@ -226,23 +215,16 @@ impl RPSRow {
         context: &Context<'_>,
         interaction: &ComponentInteraction,
         choice: RPSChoice,
-    ) -> BotResult<InteractiveEmbedResponse> {
+    ) -> BotResult<InteractiveStateResponse> {
         let did_play = self.game.play(interaction.user.id.to_string(), choice);
         if !did_play {
-            return Ok(InteractiveEmbedResponse::new());
+            return Ok(InteractiveStateResponse::new());
         }
 
         let state = self.game.state();
         if state.is_finished() {
             self.game.register_end(&context.data().core).await?;
         }
-
-        let embed = self.build_embed(context);
-        let row_update = if state.is_finished() {
-            InteractiveEmbedRowUpdate::Remove
-        } else {
-            InteractiveEmbedRowUpdate::Keep
-        };
 
         match state {
             RPSState::Winner1 => {
@@ -272,39 +254,19 @@ impl RPSRow {
             _ => {}
         }
 
-        Ok(InteractiveEmbedResponse::new()
-            .embed(embed)
-            .row_update(row_update)
-            .clear_content(state.is_finished())
-            .do_stop(state.is_finished()))
+        Ok(InteractiveStateResponse::new()
+            .update(true)
+            .stop(self.game.state().is_finished()))
     }
 }
 
 #[async_trait::async_trait]
-impl InteractiveRow for RPSRow {
-    fn render(&self, context: &Context) -> Option<CreateActionRow> {
-        Some(CreateActionRow::Buttons(vec![
-            CreateButton::new("rps_rock")
-                .style(ButtonStyle::Secondary)
-                .emoji(context.emoji(EmojiType::Rock)),
-            CreateButton::new("rps_paper")
-                .style(ButtonStyle::Secondary)
-                .emoji(context.emoji(EmojiType::Paper)),
-            CreateButton::new("rps_scissors")
-                .style(ButtonStyle::Secondary)
-                .emoji(context.emoji(EmojiType::Scissors)),
-        ]))
-    }
-
-    fn matches(&self, custom_id: &str) -> bool {
-        custom_id == "rps_rock" || custom_id == "rps_paper" || custom_id == "rps_scissors"
-    }
-
-    async fn handle(
+impl InteractiveState for State {
+    async fn handle_interaction(
         &mut self,
         context: &Context,
         interaction: &ComponentInteraction,
-    ) -> BotResult<InteractiveEmbedResponse> {
+    ) -> BotResult<InteractiveStateResponse> {
         match interaction.data.custom_id.as_str() {
             "rps_rock" => self.on_choice(context, interaction, RPSChoice::Rock).await,
             "rps_paper" => self.on_choice(context, interaction, RPSChoice::Paper).await,
@@ -312,7 +274,40 @@ impl InteractiveRow for RPSRow {
                 self.on_choice(context, interaction, RPSChoice::Scissors)
                     .await
             }
-            _ => Ok(InteractiveEmbedResponse::new()),
+            _ => Ok(InteractiveStateResponse::new()),
+        }
+    }
+
+    async fn render_content(&self, _context: &Context) -> BotResult<Option<String>> {
+        if !self.game.state().is_finished() {
+            Ok(Some(format!(
+                "**<@{}>, you were challenged to a game of Rock Paper Scissors by <@{}>!**",
+                self.game.user_2.id, self.game.user_1.id
+            )))
+        } else {
+            Ok(None)
+        }
+    }
+
+    async fn render_embed(&self, context: &Context) -> BotResult<CreateEmbed> {
+        Ok(self.build_embed(context))
+    }
+
+    async fn render_rows(&self, context: &Context) -> BotResult<Vec<CreateActionRow>> {
+        if self.game.state().is_finished() {
+            Ok(vec![])
+        } else {
+            Ok(vec![CreateActionRow::Buttons(vec![
+                CreateButton::new("rps_rock")
+                    .style(ButtonStyle::Secondary)
+                    .emoji(context.emoji(EmojiType::Rock)),
+                CreateButton::new("rps_paper")
+                    .style(ButtonStyle::Secondary)
+                    .emoji(context.emoji(EmojiType::Paper)),
+                CreateButton::new("rps_scissors")
+                    .style(ButtonStyle::Secondary)
+                    .emoji(context.emoji(EmojiType::Scissors)),
+            ])])
         }
     }
 }

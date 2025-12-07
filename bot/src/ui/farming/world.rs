@@ -1,8 +1,8 @@
 use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
-use crate::ui::embed::CreateEmbedExt;
 use crate::ui::emoji::EmojiType;
+use crate::ui::message::CreateEmbedExt;
 use crate::utils::formatting::humane_time;
 use crate::Context;
 use neobabu_core::database::entity::farming_world;

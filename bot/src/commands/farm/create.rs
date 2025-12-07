@@ -1,8 +1,8 @@
 use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
-use crate::ui::embed::CreateEmbedExt;
 use crate::ui::farming::world::show_world;
+use crate::ui::message::CreateEmbedExt;
 use crate::Context;
 use neobabu_core::error::CoreError;
 use neobabu_core::games::farming::hemisphere::Hemisphere;

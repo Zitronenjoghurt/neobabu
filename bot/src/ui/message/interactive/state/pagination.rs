@@ -1,42 +1,25 @@
 use crate::context::ContextExt;
 use crate::error::BotResult;
-use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
-use crate::ui::embed::interactive::rows::InteractiveRow;
-use crate::ui::embed::CreateEmbedExt;
 use crate::ui::emoji::EmojiType;
+use crate::ui::message::interactive::state::{InteractiveState, InteractiveStateResponse};
+use crate::ui::message::CreateEmbedExt;
 use crate::Context;
 use poise::serenity_prelude::{
     ButtonStyle, ComponentInteraction, CreateActionRow, CreateButton, CreateEmbed,
 };
-use std::ops::{Deref, DerefMut};
 
-pub struct PaginationRow<T: PaginationRowTrait>(pub T);
-
-impl<T> Deref for PaginationRow<T>
-where
-    T: PaginationRowTrait,
-{
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for PaginationRow<T>
-where
-    T: PaginationRowTrait,
-{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
+pub struct PaginationState<T: PaginationStateTrait>(pub T);
 
 #[async_trait::async_trait]
-pub trait PaginationRowTrait: Sized {
+pub trait PaginationStateTrait: Sized + Send + Sync {
     fn get_page(&self) -> usize;
     fn set_page(&mut self, page: usize);
     fn max_pages(&self) -> usize;
     async fn render_page(&self, page: usize, ctx: &Context) -> BotResult<CreateEmbed>;
+
+    async fn content(&self, _ctx: &Context) -> BotResult<Option<String>> {
+        Ok(None)
+    }
 
     async fn render_current_page(&self, ctx: &Context) -> BotResult<CreateEmbed> {
         Ok(self
@@ -84,30 +67,68 @@ pub trait PaginationRowTrait: Sized {
         self.max_pages() / 5 + 1
     }
 
-    fn build(self) -> PaginationRow<Self> {
-        PaginationRow(self)
+    fn build(self) -> PaginationState<Self> {
+        PaginationState(self)
     }
 }
 
 #[async_trait::async_trait]
-impl<T: PaginationRowTrait + Send + Sync> InteractiveRow for PaginationRow<T> {
-    fn render(&self, context: &Context) -> Option<CreateActionRow> {
-        if self.max_pages() <= 1 {
-            return None;
+impl<T: PaginationStateTrait> InteractiveState for PaginationState<T> {
+    async fn handle_interaction(
+        &mut self,
+        _context: &Context,
+        interaction: &ComponentInteraction,
+    ) -> BotResult<InteractiveStateResponse> {
+        let mut do_update = true;
+        match interaction.data.custom_id.as_str() {
+            "pagination_row_double_left" => {
+                let count = self.0.double_page_count();
+                self.0.go_back(count);
+            }
+            "pagination_row_left" => {
+                self.0.go_back(1);
+            }
+            "pagination_row_right" => {
+                self.0.go_forward(1);
+            }
+            "pagination_row_double_right" => {
+                let count = self.0.double_page_count();
+                self.0.go_forward(count);
+            }
+            "pagination_row_back" => self.0.set_page(0),
+            _ => {
+                do_update = false;
+            }
         };
 
-        if self.max_pages() <= 5 {
-            return Some(CreateActionRow::Buttons(vec![
+        Ok(InteractiveStateResponse::new().update(do_update))
+    }
+
+    async fn render_content(&self, context: &Context) -> BotResult<Option<String>> {
+        self.0.content(context).await
+    }
+
+    async fn render_embed(&self, context: &Context) -> BotResult<CreateEmbed> {
+        self.0.render_current_page(context).await
+    }
+
+    async fn render_rows(&self, context: &Context) -> BotResult<Vec<CreateActionRow>> {
+        if self.0.max_pages() <= 1 {
+            return Ok(vec![]);
+        };
+
+        if self.0.max_pages() <= 5 {
+            return Ok(vec![CreateActionRow::Buttons(vec![
                 CreateButton::new("pagination_row_left")
                     .style(ButtonStyle::Secondary)
                     .emoji(context.emoji(EmojiType::ArrowLeft)),
                 CreateButton::new("pagination_row_right")
                     .style(ButtonStyle::Secondary)
                     .emoji(context.emoji(EmojiType::ArrowRight)),
-            ]));
-        }
+            ])]);
+        };
 
-        Some(CreateActionRow::Buttons(vec![
+        Ok(vec![CreateActionRow::Buttons(vec![
             CreateButton::new("pagination_row_double_left")
                 .style(ButtonStyle::Secondary)
                 .emoji(context.emoji(EmojiType::ArrowDoubleLeft)),
@@ -123,42 +144,6 @@ impl<T: PaginationRowTrait + Send + Sync> InteractiveRow for PaginationRow<T> {
             CreateButton::new("pagination_row_back")
                 .style(ButtonStyle::Secondary)
                 .emoji(context.emoji(EmojiType::ArrowBack)),
-        ]))
-    }
-
-    fn matches(&self, custom_id: &str) -> bool {
-        custom_id == "pagination_row_double_left"
-            || custom_id == "pagination_row_left"
-            || custom_id == "pagination_row_right"
-            || custom_id == "pagination_row_double_right"
-            || custom_id == "pagination_row_back"
-    }
-
-    async fn handle(
-        &mut self,
-        context: &Context,
-        interaction: &ComponentInteraction,
-    ) -> BotResult<InteractiveEmbedResponse> {
-        match interaction.data.custom_id.as_str() {
-            "pagination_row_double_left" => {
-                let count = self.double_page_count();
-                self.go_back(count);
-            }
-            "pagination_row_left" => {
-                self.go_back(1);
-            }
-            "pagination_row_right" => {
-                self.go_forward(1);
-            }
-            "pagination_row_double_right" => {
-                let count = self.double_page_count();
-                self.go_forward(count);
-            }
-            "pagination_row_back" => self.set_page(0),
-            _ => {}
-        };
-
-        let embed = self.render_current_page(context).await?;
-        Ok(InteractiveEmbedResponse::new().embed(embed))
+        ])])
     }
 }

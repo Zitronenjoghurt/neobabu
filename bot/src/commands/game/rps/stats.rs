@@ -1,7 +1,7 @@
 use crate::context::ContextExt;
 use crate::error::{BotError, BotResult};
-use crate::ui::embed::CreateEmbedExt;
 use crate::ui::emoji::EmojiType;
+use crate::ui::message::CreateEmbedExt;
 use crate::Context;
 use poise::serenity_prelude::{CreateEmbed, Member};
 

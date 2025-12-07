@@ -1,9 +1,9 @@
 use crate::context::ContextExt;
 use crate::error::{BotError, BotResult};
 use crate::ui::color::UiColor;
-use crate::ui::embed::interactive::rows::pagination::PaginationRowTrait;
-use crate::ui::embed::interactive::InteractiveEmbed;
-use crate::ui::embed::CreateEmbedExt;
+use crate::ui::message::interactive::state::pagination::PaginationStateTrait;
+use crate::ui::message::interactive::InteractiveMessage;
+use crate::ui::message::CreateEmbedExt;
 use crate::ui::time::format_time_relative_at;
 use crate::Context;
 use neobabu_core::error::CoreError;
@@ -28,30 +28,28 @@ pub async fn upcoming(ctx: Context<'_>) -> BotResult<()> {
     }
 
     let total_count = ctx.stores().user_birthday.count_by_guild(&guild.id).await? as usize;
-    let row = UpcomingRow {
+    let state = Upcoming {
         guild_id: guild.id,
         page: 0,
         total_count,
     };
 
-    let first_page = row.render_current_page(&ctx).await?;
-    InteractiveEmbed::new(&ctx, first_page)
+    InteractiveMessage::new(&ctx, state.build())
         .timeout(Duration::from_secs(300))
-        .row(row.build())
         .run()
         .await?;
 
     Ok(())
 }
 
-struct UpcomingRow {
+struct Upcoming {
     guild_id: String,
     page: usize,
     total_count: usize,
 }
 
 #[async_trait::async_trait]
-impl PaginationRowTrait for UpcomingRow {
+impl PaginationStateTrait for Upcoming {
     fn get_page(&self) -> usize {
         self.page
     }

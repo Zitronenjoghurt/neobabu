@@ -1,7 +1,7 @@
 use crate::error::BotResult;
 use crate::state::BotState;
 use crate::ui::color::UiColor;
-use crate::ui::embed::CreateEmbedExt;
+use crate::ui::message::CreateEmbedExt;
 use neobabu_core::events::new_youtube_video::NewYoutubeVideo;
 use poise::futures_util::StreamExt;
 use poise::serenity_prelude::{ChannelId, Context, CreateEmbed, CreateEmbedAuthor, CreateMessage};

@@ -1,7 +1,7 @@
 use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
-use crate::ui::embed::CreateEmbedExt;
+use crate::ui::message::CreateEmbedExt;
 use crate::utils::formatting::format_bool;
 use crate::Context;
 use neobabu_core::stores::{IntoActiveModel, Set};

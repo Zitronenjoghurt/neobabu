@@ -1,10 +1,9 @@
 use crate::context::ContextExt;
 use crate::error::BotResult;
 use crate::ui::color::UiColor;
-use crate::ui::embed::interactive::response::InteractiveEmbedResponse;
-use crate::ui::embed::interactive::rows::accept::AcceptRowTrait;
-use crate::ui::embed::interactive::InteractiveEmbed;
-use crate::ui::embed::CreateEmbedExt;
+use crate::ui::message::interactive::state::simple_accept::SimpleAcceptStateTrait;
+use crate::ui::message::interactive::InteractiveMessage;
+use crate::ui::message::CreateEmbedExt;
 use crate::Context;
 use neobabu_core::database::entity::{guild, user, youtube_channel};
 use neobabu_core::error::CoreError;
@@ -44,19 +43,13 @@ pub async fn subscribe(
         .verify_can_subscribe_to_channel(&guild, &channel)
         .await?;
 
-    let channel_url = channel.url();
-    let row = YoutubeSubscribeRow {
+    let state = YoutubeSubscribeState {
         channel,
         guild,
         user,
     };
-    let embed = row
-        .basic_embed()
-        .ui_color(UiColor::Warning)
-        .title("New channel subscription")
-        .description(format!("Do you want to subscribe to this channel?\n\nDouble check this is the correct channel before proceeding:\n{channel_url}"));
-    InteractiveEmbed::new(&ctx, embed)
-        .row(row.build())
+
+    InteractiveMessage::new(&ctx, state.build())
         .timeout(std::time::Duration::from_secs(120))
         .run()
         .await?;
@@ -64,13 +57,13 @@ pub async fn subscribe(
     Ok(())
 }
 
-struct YoutubeSubscribeRow {
+struct YoutubeSubscribeState {
     channel: youtube_channel::Model,
     guild: guild::Model,
     user: user::Model,
 }
 
-impl YoutubeSubscribeRow {
+impl YoutubeSubscribeState {
     pub fn basic_embed(&self) -> CreateEmbed {
         let mut author = CreateEmbedAuthor::new(&self.channel.name).url(self.channel.url());
         if let Some(icon_url) = &self.channel.icon_url {
@@ -81,37 +74,40 @@ impl YoutubeSubscribeRow {
 }
 
 #[async_trait::async_trait]
-impl AcceptRowTrait for YoutubeSubscribeRow {
-    async fn accept(
-        &self,
+impl SimpleAcceptStateTrait for YoutubeSubscribeState {
+    async fn embed_question(&self, _context: &Context) -> BotResult<CreateEmbed> {
+        Ok(self.basic_embed()
+            .ui_color(UiColor::Warning)
+            .title("New channel subscription")
+            .description(format!("Do you want to subscribe to this channel?\n\nDouble check this is the correct channel before proceeding:\n{}", self.channel.url())))
+    }
+
+    async fn embed_accepted(&self, _context: &Context) -> BotResult<CreateEmbed> {
+        Ok(self.basic_embed()
+            .ui_color(UiColor::Success)
+            .title("Channel successfully subscribed")
+            .description("If you enabled the youtube notification settings on this server, you will begin to receive notifications for every new video this channel uploads."))
+    }
+
+    async fn embed_denied(&self, _context: &Context) -> BotResult<CreateEmbed> {
+        Ok(self
+            .basic_embed()
+            .ui_color(UiColor::Gray)
+            .title("Subscription request cancelled")
+            .description("You will not receive any notifications for this channel."))
+    }
+
+    async fn on_accept(
+        &mut self,
         context: &Context<'_>,
         _interaction: &ComponentInteraction,
-    ) -> BotResult<InteractiveEmbedResponse> {
+    ) -> BotResult<()> {
         context
             .services()
             .youtube
             .guild_subscribe(&self.guild, &self.user, &self.channel)
             .await?;
-
-        Ok(InteractiveEmbedResponse::halt_with(
-            self.basic_embed()
-                .ui_color(UiColor::Success)
-                .title("Channel successfully subscribed")
-                .description("If you enabled the youtube notification settings on this server, you will begin to receive notifications for every new video this channel uploads."),
-        ))
-    }
-
-    async fn deny(
-        &self,
-        _context: &Context<'_>,
-        _interaction: &ComponentInteraction,
-    ) -> BotResult<InteractiveEmbedResponse> {
-        Ok(InteractiveEmbedResponse::halt_with(
-            self.basic_embed()
-                .ui_color(UiColor::Gray)
-                .title("Subscription request cancelled")
-                .description("You will not receive any notifications for this channel."),
-        ))
+        Ok(())
     }
 
     fn accept_text(&self) -> &'static str {

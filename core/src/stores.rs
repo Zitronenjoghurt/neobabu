@@ -6,6 +6,7 @@ pub use sea_orm::{IntoActiveModel, Set};
 pub mod apod;
 pub mod black_jack_user;
 pub mod dashboard_session;
+pub mod economy;
 pub mod farming;
 pub mod farming_world;
 pub mod guild;
@@ -26,6 +27,7 @@ pub struct Stores {
     pub apod: Arc<apod::ApodStore>,
     pub bj_user: Arc<black_jack_user::BlackJackUserStore>,
     pub dashboard_session: Arc<dashboard_session::DashboardSessionStore>,
+    pub economy: Arc<economy::EconomyStore>,
     pub farming: Arc<farming::FarmingStore>,
     pub farming_world: Arc<farming_world::FarmingWorldStore>,
     pub guild: Arc<guild::GuildStore>,
@@ -49,6 +51,7 @@ impl Stores {
             apod: apod::ApodStore::initialize(db),
             bj_user: black_jack_user::BlackJackUserStore::initialize(db),
             dashboard_session: dashboard_session::DashboardSessionStore::initialize(db),
+            economy: economy::EconomyStore::initialize(db),
             farming: farming::FarmingStore::initialize(db),
             farming_world: farming_world::FarmingWorldStore::initialize(db),
             guild: guild::GuildStore::initialize(db),

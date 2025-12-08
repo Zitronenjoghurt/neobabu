@@ -4,6 +4,8 @@ pub use super::apod::Entity as Apod;
 pub use super::black_jack_rivals::Entity as BlackJackRivals;
 pub use super::black_jack_user::Entity as BlackJackUser;
 pub use super::dashboard_session::Entity as DashboardSession;
+pub use super::economy::Entity as Economy;
+pub use super::economy_pending::Entity as EconomyPending;
 pub use super::farming::Entity as Farming;
 pub use super::farming_world::Entity as FarmingWorld;
 pub use super::guild::Entity as Guild;

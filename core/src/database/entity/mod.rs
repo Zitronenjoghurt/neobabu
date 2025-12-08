@@ -6,6 +6,8 @@ pub mod apod;
 pub mod black_jack_rivals;
 pub mod black_jack_user;
 pub mod dashboard_session;
+pub mod economy;
+pub mod economy_pending;
 pub mod farming;
 pub mod farming_world;
 pub mod guild;

@@ -79,12 +79,13 @@ impl<'a> InteractiveMessage<'a> {
 
     async fn do_run(&mut self, reply_handle: &ReplyHandle<'_>) -> BotResult<()> {
         let message = reply_handle.message().await?;
-        let collector = message
-            .await_component_interaction(self.ctx.serenity_context())
-            .timeout(self.timeout);
+        let collector = message.await_component_interaction(self.ctx.serenity_context());
 
         let mut collector_stream = collector.stream();
         let mut tick_interval = self.tick_interval.map(|d| tokio::time::interval(d));
+
+        let sleep = tokio::time::sleep(self.timeout);
+        tokio::pin!(sleep);
 
         loop {
             tokio::select! {
@@ -134,7 +135,7 @@ impl<'a> InteractiveMessage<'a> {
                     }
                 }
 
-                else => {
+                _ = &mut sleep => {
                     let timeout_embed = if let Some(embed) = self.on_timeout.clone() {
                         embed
                     } else {

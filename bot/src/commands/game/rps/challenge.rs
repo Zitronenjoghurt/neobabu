@@ -12,7 +12,7 @@ use poise::serenity_prelude::{CreateEmbed, User};
 use std::time::Duration;
 
 /// Challenge a user to a game of Rock Paper Scissors.
-#[poise::command(slash_command, guild_only, user_cooldown = "30")]
+#[poise::command(slash_command, guild_only, user_cooldown = "20")]
 pub async fn challenge(ctx: Context<'_>, opponent: User) -> BotResult<()> {
     ctx.defer().await?;
 

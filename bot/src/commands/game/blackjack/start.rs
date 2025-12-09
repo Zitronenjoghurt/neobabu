@@ -8,7 +8,7 @@ use neobabu_core::types::currency::Currency;
 use std::time::Duration;
 
 /// Start a game of Blackjack, which up to 4 players can join.
-#[poise::command(slash_command, guild_only, user_cooldown = "30")]
+#[poise::command(slash_command, guild_only, user_cooldown = "20")]
 pub async fn start(
     ctx: Context<'_>,
     #[description = "How much Citrine to bet"] wager: Option<u32>,
@@ -28,7 +28,7 @@ pub async fn start(
             .economy
             .balance(&user, Currency::Citrine)
             .await?;
-        if wager as i64 > balance {
+        if wager as i64 > balance.available {
             return Err(BotError::InsufficientFunds(Currency::Citrine));
         }
         game = game.with_wager(wager);

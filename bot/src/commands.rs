@@ -9,6 +9,7 @@ mod owner;
 mod ping;
 mod settings;
 mod space;
+mod wallet;
 mod youtube;
 
 pub fn get_commands() -> Vec<Command<BotState, BotError>> {
@@ -20,6 +21,7 @@ pub fn get_commands() -> Vec<Command<BotState, BotError>> {
         owner::sync_guild(),
         settings::settings(),
         space::space(),
+        wallet::wallet(),
         youtube::youtube(),
     ]
 }

@@ -1,5 +1,6 @@
 use neobabu_core::games::farming::season::Season;
 use neobabu_core::games::playing_cards::PlayingCard;
+use neobabu_core::types::currency::Currency;
 use rand::prelude::IndexedRandom;
 
 #[derive(Debug, Copy, Clone)]
@@ -644,6 +645,14 @@ impl From<PlayingCard> for EmojiType {
             PlayingCard::DiamondsQueen => Self::CardDiamondsQ,
             PlayingCard::DiamondsKing => Self::CardDiamondsK,
             PlayingCard::DiamondsAce => Self::CardDiamondsA,
+        }
+    }
+}
+
+impl From<Currency> for EmojiType {
+    fn from(value: Currency) -> Self {
+        match value {
+            Currency::Citrine => EmojiType::Citrine,
         }
     }
 }

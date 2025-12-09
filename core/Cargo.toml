@@ -29,7 +29,7 @@ reqwest-leaky-bucket = "0.4.0"
 serde = { workspace = true }
 serde_json = { workspace = true }
 serenity = "0.12.4"
-strum = "0.27.2"
+strum = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-cron-scheduler = "0.15.1"

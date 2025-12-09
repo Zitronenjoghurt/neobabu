@@ -44,7 +44,7 @@ impl EconomyStore {
         txn: &impl ConnectionTrait,
         user_id: &str,
         currency_val: i16,
-    ) -> CoreResult<i64> {
+    ) -> CoreResult<Balance> {
         let locked_subquery = Query::select()
             .expr(Func::coalesce([
                 Expr::col((economy_pending::Entity, economy_pending::Column::Amount)).sum(),
@@ -66,20 +66,27 @@ impl EconomyStore {
                     .cast_as(Alias::new("BIGINT")),
                 Alias::new("available"),
             )
+            .expr_as(
+                Expr::col((economy::Entity, economy::Column::Amount)),
+                Alias::new("total"),
+            )
             .from(economy::Entity)
             .and_where(Expr::col(economy::Column::UserId).eq(user_id))
             .and_where(Expr::col(economy::Column::Currency).eq(currency_val))
             .to_owned();
 
-        let result = AvailableBalance::find_by_statement(txn.get_database_backend().build(&query))
+        let result = Balance::find_by_statement(txn.get_database_backend().build(&query))
             .one(txn)
             .await?
-            .unwrap_or(AvailableBalance { available: 0 });
+            .unwrap_or(Balance {
+                available: 0,
+                total: 0,
+            });
 
-        Ok(result.available)
+        Ok(result)
     }
 
-    pub async fn balance(&self, user: &user::Model, currency: Currency) -> CoreResult<i64> {
+    pub async fn balance(&self, user: &user::Model, currency: Currency) -> CoreResult<Balance> {
         self.balance_in_txn(self.db.conn(), &user.id, currency.into())
             .await
     }
@@ -97,9 +104,9 @@ impl EconomyStore {
         };
 
         let txn = self.db.conn().begin().await?;
-        let available = self.balance_in_txn(&txn, &user.id, currency.into()).await?;
+        let balance = self.balance_in_txn(&txn, &user.id, currency.into()).await?;
 
-        if available < amount {
+        if balance.available < amount {
             txn.rollback().await?;
             return Ok(false);
         };
@@ -224,6 +231,7 @@ impl EconomyStore {
 }
 
 #[derive(FromQueryResult)]
-struct AvailableBalance {
-    available: i64,
+pub struct Balance {
+    pub available: i64,
+    pub total: i64,
 }

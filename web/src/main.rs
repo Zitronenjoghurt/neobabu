@@ -1,8 +1,6 @@
 use crate::state::ServerState;
 use axum::Router;
-use neobabu_core::types::currency::Currency;
 use std::net::{IpAddr, SocketAddr};
-use std::time::Duration;
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;

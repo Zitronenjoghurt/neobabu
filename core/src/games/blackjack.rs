@@ -125,6 +125,20 @@ impl BlackjackGame {
             .unwrap_or(false)
     }
 
+    pub fn is_bust(&self, player: impl AsRef<str>) -> bool {
+        self.players
+            .get(player.as_ref())
+            .map(|p| p.is_bust())
+            .unwrap_or(false)
+    }
+
+    pub fn is_stand(&self, player: impl AsRef<str>) -> bool {
+        self.players
+            .get(player.as_ref())
+            .map(|p| p.standing)
+            .unwrap_or(false)
+    }
+
     pub fn play(&mut self, player_name: impl AsRef<str>, move_: BlackjackMove) -> bool {
         let player_name = player_name.as_ref().to_string();
 
@@ -154,6 +168,12 @@ impl BlackjackGame {
         true
     }
 
+    pub fn iter_players(&self) -> impl Iterator<Item = (&String, &BlackjackPlayer)> {
+        self.turn_order
+            .iter()
+            .filter_map(|name| self.players.get(name).map(|p| (name, p)))
+    }
+
     pub fn get_outcomes(&self) -> Option<HashMap<String, BlackjackOutcome>> {
         if !self.is_over() {
             return None;
@@ -163,8 +183,7 @@ impl BlackjackGame {
         let dealer_bust = self.dealer.is_bust();
 
         let results = self
-            .players
-            .iter()
+            .iter_players()
             .map(|(name, player)| {
                 let player_score = player.score();
                 let player_bust = player.is_bust();

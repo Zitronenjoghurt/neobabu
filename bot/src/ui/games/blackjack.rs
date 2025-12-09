@@ -90,8 +90,12 @@ impl BlackjackUi {
                     .map(|time| format!(" | **AUTO-STAND** {}", format_time_relative_at(time)))
                     .unwrap_or_default();
                 format!("{base_text}{to_move_till}")
+            } else if self.game.is_bust(id.as_ref()) {
+                format!("{base_text} | **BUST**")
+            } else if self.game.is_stand(id.as_ref()) {
+                format!("{base_text} | **STANDING**")
             } else {
-                base_text
+                format!("{base_text} | *waiting...*")
             }
         }
     }
@@ -99,7 +103,7 @@ impl BlackjackUi {
     fn format_players(&self, ctx: &Context) -> String {
         let dealer = self.format_dealer(ctx);
         let mut text = format!("{dealer}\n\n");
-        for (id, _) in self.game.players.iter() {
+        for (id, _) in self.game.iter_players() {
             text.push_str(&self.format_player(ctx, id));
             text.push('\n');
         }
@@ -260,7 +264,13 @@ impl InteractiveState for BlackjackUi {
             update = true;
         }
 
-        // ToDo: player auto-stand
+        if let Some(player_id) = self.game.current_player.clone()
+            && let Some(to_move_till) = self.player_to_move_till()
+            && now >= to_move_till
+        {
+            self.game.play(player_id, BlackjackMove::Stand);
+            update = true;
+        }
 
         Ok(InteractiveStateResponse::default().update(update))
     }

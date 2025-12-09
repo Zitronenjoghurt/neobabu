@@ -165,7 +165,6 @@ impl BlackjackGame {
                 player.deck.add_bottom(card);
 
                 if player.is_bust() {
-                    player.standing = true;
                     self.next_player();
                 }
             }

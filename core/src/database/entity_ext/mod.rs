@@ -1,4 +1,5 @@
 mod apod;
+mod bj_user;
 mod farming;
 mod farming_world;
 mod inventory_item;

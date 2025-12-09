@@ -101,8 +101,16 @@ impl BlackjackUi {
     }
 
     fn format_players(&self, ctx: &Context) -> String {
+        let wager = if let Some(wager) = self.game.wager {
+            format!(
+                "**WAGER: `{wager}`** {}\n\n",
+                ctx.emoji_text(EmojiType::Citrine)
+            )
+        } else {
+            "".to_string()
+        };
         let dealer = self.format_dealer(ctx);
-        let mut text = format!("{dealer}\n\n");
+        let mut text = format!("{wager}{dealer}\n\n");
         for (id, _) in self.game.iter_players() {
             text.push_str(&self.format_player(ctx, id));
             text.push('\n');
@@ -151,13 +159,28 @@ impl BlackjackUi {
             let score = player.score();
             let deck = self.format_deck(ctx, player.deck());
 
-            let outcome = match outcome {
-                BlackjackOutcome::Win => "WON",
-                BlackjackOutcome::Loss => "LOST",
-                BlackjackOutcome::Push => "PUSHED",
+            let outcome = if let Some(wager) = self.game.wager {
+                match outcome {
+                    BlackjackOutcome::Win => {
+                        format!("**`+{wager}`** {}", ctx.emoji_text(EmojiType::Citrine))
+                    }
+                    BlackjackOutcome::Loss => {
+                        format!("**`-{wager}`** {}", ctx.emoji_text(EmojiType::Citrine))
+                    }
+                    BlackjackOutcome::Push => {
+                        format!("**`±0`** {}", ctx.emoji_text(EmojiType::Citrine))
+                    }
+                }
+            } else {
+                match outcome {
+                    BlackjackOutcome::Win => "**`WON`**",
+                    BlackjackOutcome::Loss => "**`LOST`**",
+                    BlackjackOutcome::Push => "**`PUSHED`**",
+                }
+                .to_string()
             };
 
-            let text = format!("{emotion} <@{user_id}> **`{score}`** {deck} | **`{outcome}`**");
+            let text = format!("{emotion} <@{user_id}> **`{score}`** {deck} | {outcome}");
             players.push_str(&text);
             players.push('\n');
         }
@@ -170,14 +193,22 @@ impl BlackjackUi {
             .color(Color::default())
     }
 
-    fn handle_join(&mut self, id: impl AsRef<str>) -> InteractiveStateResponse {
-        if !self.game.players.contains_key(id.as_ref()) && self.game.players.len() <= 4 {
-            self.game.register_player(id.as_ref());
+    async fn handle_join(
+        &mut self,
+        ctx: &Context<'_>,
+        id: impl AsRef<str>,
+    ) -> BotResult<InteractiveStateResponse> {
+        if !self.game.players.contains_key(id.as_ref()) {
+            let user = ctx.stores().user.fetch_or_create(&id).await?;
+            ctx.services()
+                .blackjack
+                .register_user(&mut self.game, &user, 4)
+                .await?;
             self.player_emoji
                 .insert(id.as_ref().to_string(), EmojiType::random_waiting());
-            InteractiveStateResponse::new_update()
+            Ok(InteractiveStateResponse::new_update())
         } else {
-            InteractiveStateResponse::default()
+            Ok(InteractiveStateResponse::default())
         }
     }
 
@@ -192,6 +223,10 @@ impl BlackjackUi {
         } else {
             InteractiveStateResponse::default()
         }
+    }
+
+    async fn handle_finish(&self, ctx: &Context<'_>) -> BotResult<()> {
+        Ok(ctx.services().blackjack.resolve_game(&self.game).await?)
     }
 }
 
@@ -208,18 +243,19 @@ impl BlackjackUi {
 impl InteractiveState for BlackjackUi {
     async fn handle_interaction(
         &mut self,
-        _ctx: &Context,
+        ctx: &Context,
         interaction: &ComponentInteraction,
     ) -> BotResult<InteractiveStateResponse> {
         let id = interaction.user.id.to_string();
         let response = match interaction.data.custom_id.as_str() {
-            "join_game" => self.handle_join(id),
+            "join_game" => self.handle_join(ctx, id).await?,
             "play_hit" => self.handle_play(id, BlackjackMove::Hit),
             "play_stand" => self.handle_play(id, BlackjackMove::Stand),
             _ => return Ok(InteractiveStateResponse::default()),
         };
 
         if self.game.is_over() {
+            self.handle_finish(ctx).await?;
             Ok(response.stop(true))
         } else {
             Ok(response)
@@ -238,9 +274,15 @@ impl InteractiveState for BlackjackUi {
 
     async fn render_rows(&self, _ctx: &Context) -> BotResult<Vec<CreateActionRow>> {
         if !self.game.has_started() {
+            let text = if let Some(wager) = self.game.wager {
+                format!("Join ({wager} Citrine)")
+            } else {
+                "Join".to_string()
+            };
+
             Ok(vec![CreateActionRow::Buttons(vec![
                 CreateButton::new("join_game")
-                    .label("Join")
+                    .label(text)
                     .style(ButtonStyle::Success),
             ])])
         } else {
@@ -255,9 +297,10 @@ impl InteractiveState for BlackjackUi {
         }
     }
 
-    async fn on_tick(&mut self, _ctx: &Context) -> BotResult<InteractiveStateResponse> {
+    async fn on_tick(&mut self, ctx: &Context) -> BotResult<InteractiveStateResponse> {
         let now = chrono::Utc::now();
         let mut update = false;
+        let mut stop = false;
 
         if !self.game.has_started() && now >= self.starts_at {
             self.game.start_game();
@@ -270,8 +313,14 @@ impl InteractiveState for BlackjackUi {
         {
             self.game.play(player_id, BlackjackMove::Stand);
             update = true;
+            if self.game.is_over() {
+                self.handle_finish(ctx).await?;
+                stop = true;
+            }
         }
 
-        Ok(InteractiveStateResponse::default().update(update))
+        Ok(InteractiveStateResponse::default()
+            .update(update)
+            .stop(stop))
     }
 }

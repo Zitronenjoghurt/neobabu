@@ -3,6 +3,7 @@ use crate::ui::message::CreateEmbedExt;
 use crate::ui::time::format_time_relative_in;
 use crate::Context;
 use nanoid::nanoid;
+use neobabu_core::types::currency::Currency;
 use poise::serenity_prelude::{CreateEmbed, Permissions};
 use poise::FrameworkError;
 use tracing::error;
@@ -19,6 +20,8 @@ pub enum BotError {
     FarmNotFound,
     #[error("This command can only be used in a guild.")]
     GuildCommandOnly,
+    #[error("You do not have enough {0:?} to execute this command.")]
+    InsufficientFunds(Currency),
     #[error(
         "Invalid timezone, please use a valid timezone from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.\n\nIf you have no clue, this website might help: https://webbrowsertools.com/timezone/"
     )]
@@ -37,6 +40,8 @@ pub enum BotError {
     TargetYourself,
     #[error("Error deserializing TOML: {0}")]
     TomlDeserialize(#[from] toml::de::Error),
+    #[error("Wager must be greater than zero.")]
+    WagerZero,
 }
 
 impl BotError {
@@ -45,9 +50,11 @@ impl BotError {
             Self::Core(error) => error.is_user_error(),
             Self::FarmNotFound
             | Self::GuildCommandOnly
+            | Self::InsufficientFunds(_)
             | Self::InvalidTimezone(_)
             | Self::TargetBotOrYourself
-            | Self::TargetYourself => true,
+            | Self::TargetYourself
+            | Self::WagerZero => true,
             Self::Env(_)
             | Self::Io(_)
             | Self::Reqwest(_)

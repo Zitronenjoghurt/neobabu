@@ -1,6 +1,7 @@
 use crate::games::playing_cards::PlayingCardDeck;
 use std::collections::HashMap;
 use std::time::Instant;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BlackjackMove {
@@ -10,23 +11,27 @@ pub enum BlackjackMove {
 
 #[derive(Debug)]
 pub struct BlackjackGame {
+    pub id: Uuid,
     pub deck: PlayingCardDeck,
     pub dealer: BlackjackPlayer,
     pub players: HashMap<String, BlackjackPlayer>,
     pub current_player: Option<String>,
     pub turn_order: Vec<String>,
     pub last_move: Option<Instant>,
+    pub wager: Option<u32>,
 }
 
 impl Default for BlackjackGame {
     fn default() -> Self {
         Self {
+            id: Uuid::new_v4(),
             deck: PlayingCardDeck::new_shuffled(),
             dealer: BlackjackPlayer::default(),
             players: HashMap::new(),
             turn_order: Vec::new(),
             current_player: None,
             last_move: None,
+            wager: None,
         }
     }
 }
@@ -34,6 +39,11 @@ impl Default for BlackjackGame {
 impl BlackjackGame {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn with_wager(mut self, wager: u32) -> Self {
+        self.wager = Some(wager);
+        self
     }
 
     pub fn register_player(&mut self, player: impl AsRef<str>) {
@@ -174,7 +184,7 @@ impl BlackjackGame {
             .filter_map(|name| self.players.get(name).map(|p| (name, p)))
     }
 
-    pub fn get_outcomes(&self) -> Option<HashMap<String, BlackjackOutcome>> {
+    pub fn get_outcomes(&self) -> Option<Vec<(String, BlackjackOutcome)>> {
         if !self.is_over() {
             return None;
         }

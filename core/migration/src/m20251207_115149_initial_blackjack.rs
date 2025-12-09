@@ -16,9 +16,9 @@ impl MigrationTrait for Migration {
                     .col(integer(BlackJackUser::TimesFinalHit).default(0))
                     .col(big_integer(BlackJackUser::FinalStandScoreTotal).default(0))
                     .col(integer(BlackJackUser::TimesFinalStand).default(0))
-                    .col(big_integer(BlackJackUser::BustScoreTotal).default(0))
-                    .col(integer(BlackJackUser::TimesBusted).default(0))
                     .col(integer(BlackJackUser::BlackjackCount).default(0))
+                    .col(integer(BlackJackUser::BlackjackStreak).default(0))
+                    .col(integer(BlackJackUser::LongestBlackjackStreak).default(0))
                     .col(integer(BlackJackUser::Wins).default(0))
                     .col(integer(BlackJackUser::Losses).default(0))
                     .col(integer(BlackJackUser::Draws).default(0))
@@ -28,6 +28,10 @@ impl MigrationTrait for Migration {
                     .col(integer(BlackJackUser::LongestLossStreak).default(0))
                     .col(integer(BlackJackUser::DrawStreak).default(0))
                     .col(integer(BlackJackUser::LongestDrawStreak).default(0))
+                    .col(big_integer(BlackJackUser::DealerScoreTotal).default(0))
+                    .col(big_integer(BlackJackUser::TotalCitrineWagered).default(0))
+                    .col(big_integer(BlackJackUser::TotalCitrineWon).default(0))
+                    .col(big_integer(BlackJackUser::TotalCitrineLost).default(0))
                     .col(timestamp(BlackJackUser::CreatedAt).default(Expr::current_timestamp()))
                     .col(timestamp(BlackJackUser::UpdatedAt).default(Expr::current_timestamp()))
                     .foreign_key(
@@ -66,9 +70,9 @@ enum BlackJackUser {
     TimesFinalHit,
     FinalStandScoreTotal,
     TimesFinalStand,
-    BustScoreTotal,
-    TimesBusted,
     BlackjackCount,
+    BlackjackStreak,
+    LongestBlackjackStreak,
     Wins,
     Losses,
     Draws,
@@ -78,6 +82,10 @@ enum BlackJackUser {
     LongestLossStreak,
     DrawStreak,
     LongestDrawStreak,
+    DealerScoreTotal,
+    TotalCitrineWagered,
+    TotalCitrineWon,
+    TotalCitrineLost,
     CreatedAt,
     UpdatedAt,
 }

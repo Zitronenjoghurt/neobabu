@@ -59,7 +59,7 @@ pub async fn stats(ctx: Context<'_>, member: Option<Member>) -> BotResult<()> {
             true,
         )
         .field(
-            "avg. Dealer",
+            "Dealer avg.",
             format!("**`{:.2}`**", bj_user.avg_dealer()),
             true,
         )
